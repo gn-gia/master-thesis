@@ -78,7 +78,7 @@ ggplot() +
   geom_sf(data = map_occ_joined_species_with_county, aes(color = occurrences), size = 0.25) +
   theme_bw()
 
-
+# OBS! This apparently takes a WHILE to run I didn't have time to run it on 12.03.2024. Run in the morning and see if it works
 library(sf)
 library(ggplot2)
 ggplot() +
