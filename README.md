@@ -49,24 +49,41 @@ ggplot() +
   geom_sf(data = occ_sf, color = "green", size = 1) +
   theme_bw()
 
-unique(filtered_data$country)
+#unique(filtered_data$country)
 
+# Perform a spatial join
+map_occ_joined <- st_join(occ_sf, shp)
 
+# Now you have the marine organism data associated with county information
+# Count the occurrences of each species within each county:
+map_occ_joined_county <- map_occ_joined %>%
+  group_by(FYLKESNAVN) %>%
+  summarize(species_count = n_distinct(originalScientificName))
+
+View(map_occ_joined_county)
+
+# Count the number of occurrences of each species within each county
+map_occ_joined_species_with_county <- map_occ_joined %>%
+  group_by(FYLKESNAVN, originalScientificName) %>%
+  summarize(occurrences = n())
+View(map_occ_joined_species_with_county)
+
+# If there are invalid geometries, attempt to repair them
 invalid_geometries <- st_is_valid(shp)
 if (any(!invalid_geometries)) {
-  # If there are invalid geometries, attempt to repair them
   shp <- st_make_valid(shp)
 }
 
-  invalid_geometries <- st_is_valid(occ_sf)
+invalid_geometries <- st_is_valid(occ_sf)
   if (any(!invalid_geometries)) {
     occ_sf <- st_make_valid(occ_sf)
   }
 
-  library("sf")
-  map_occ_intersect <- st_intersects(shp, occ_sf,sparse = TRUE)
-  
-  library("ggplot2")
-  ggplot() +
-    geom_sf(data = map_occ_intersect, color = "pink", size = 1) +
+#Intersect layers and plot the intersected object
+#https://github.com/rstudio/cheatsheets/blob/main/sf.pdf
+library("sf")
+library("ggplot2")
+map_occ_intersect <- st_intersects(shp, occ_sf,sparse = TRUE)
+ggplot() +
+  geom_sf(data = map_occ_intersect, color = "pink", size = 1) +
     theme_bw()
