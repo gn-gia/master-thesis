@@ -68,6 +68,9 @@ map_occ_joined_species_with_county <- map_occ_joined %>%
   summarize(occurrences = n())
 View(map_occ_joined_species_with_county)
 
+
+
+--------
 # If there are invalid geometries, attempt to repair them
 invalid_geometries <- st_is_valid(shp)
 if (any(!invalid_geometries)) {
@@ -87,3 +90,25 @@ map_occ_intersect <- st_intersects(shp, occ_sf,sparse = TRUE)
 ggplot() +
   geom_sf(data = map_occ_intersect, color = "pink", size = 1) +
     theme_bw()
+
+---------
+#find habitat/bathymetry data -> maybe on geonorge
+#email being sent to mapping authoriy on 04.03.2024 to clarify on 12nm/territorial waters border
+#consider doing more research on how far from the coast are territorial waters
+#are all the records I have now marine/coastal? find a way to do this/go through table -> maybe through checklist obis
+
+#https://manual.obis.org/common_formatissues.html#spatial
+#https://r.geocompx.org/reproj-geo-data.html#reproj-geo-data
+
+#https://jsta.github.io/glatos-spatial_workshop_materials/01-vector-open-shapefile-in-r/
+#https://www.marineregions.org/downloads.php
+#https://www.r-bloggers.com/2017/01/extracting-and-enriching-ocean-biogeographic-information-system-obis-data-with-r/
+#https://manual.obis.org/common_qc.html#non-marine-species
+#https://manual.obis.org/common_formatissues.html#spatial
+#https://kartkatalog.geonorge.no/metadata/sjoekart-maritim-infrastruktur/a894ea02-d2dc-4550-ac3e-49230ceed42a
+#https://kartkatalog.geonorge.no/metadata/norways-maritime-boundaries/e106adf4-c9d8-4fce-a9b5-7886a4126d23
+
+#https://manual.obis.org/access
+#https://github.com/iobis/robis/blob/master/vignettes/getting-started.Rmd
+
+#wicket_0.4.0.tar.gz
