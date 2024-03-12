@@ -79,6 +79,19 @@ ggplot() +
   theme_bw()
 
 
+library(sf)
+library(ggplot2)
+ggplot() +
+  geom_sf(data = shp) +
+  geom_sf(data = map_occ_joined_species_with_county, aes(color = map_occ_joined_species_with_county$originalScientificName), size = 0.25) +
+  theme_bw()
+
+--
+#replace x and y from this example from Glenn's Map_script_1 with the FYLKENAVN or the originalSpeciesName or something?
+ggplot() +
+  geom_point() +
+  geom_point(aes(x=8.75, y=58.416), colour="blue")+
+  
 --------
 # If there are invalid geometries, attempt to repair them
 invalid_geometries <- st_is_valid(shp)
