@@ -68,6 +68,15 @@ map_occ_joined_species_with_county <- map_occ_joined %>%
   summarize(occurrences = n())
 View(map_occ_joined_species_with_county)
 
+class(map_occ_joined_species_with_county)
+
+# Plot the join
+library(sf)
+library(ggplot2)
+ggplot() +
+  geom_sf(data = shp) +
+  geom_sf(data = map_occ_joined_species_with_county, aes(color = occurrences), size = 0.25) +
+  theme_bw()
 
 
 --------
