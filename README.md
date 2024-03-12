@@ -1,6 +1,6 @@
-#setwd("C:/Users/gngia/OneDrive/Documents/new obis")
+# setwd("C:/Users/gngia/OneDrive/Documents/new obis")
 
-#Install robis package and run with 179=Norway and polygon excludes Svalbard and some outer marine records/areas (records from 23.02.2024)
+# Install robis package and run with 179=Norway and polygon excludes Svalbard and some outer marine records/areas (records from 23.02.2024)
 library("dplyr")
 library("ggplot2")
 library("robis")
@@ -79,7 +79,7 @@ invalid_geometries <- st_is_valid(occ_sf)
     occ_sf <- st_make_valid(occ_sf)
   }
 
-#Intersect layers and plot the intersected object
+# Intersect layers and plot the intersected object
 #https://github.com/rstudio/cheatsheets/blob/main/sf.pdf
 library("sf")
 library("ggplot2")
