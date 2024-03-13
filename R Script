@@ -99,3 +99,64 @@ ggplot() +
   geom_sf(data = map_occ_joined_species_with_county, aes(color = occurrences), size = 0.25) +
   theme_bw()
 
+# Plot the join with different colors for FYKESNAVN
+library(sf)
+library(ggplot2)
+ggplot() +
+  geom_sf(data = shp) +
+  geom_sf(data = map_occ_joined_species_with_county, aes(color = FYLKESNAVN), size = 0.25) +
+  theme_bw()
+
+# Clipped shapefile with county, municipality, and clipped to be only territorial waters and change crs
+library("ggplot2")
+library(sf)
+shp <- st_read("C:/Users/gngia/OneDrive/Documents/new obis/GIS/Kommuner_Fylker_TerrVann_Clip.shp", stringsAsFactors=FALSE)
+#View(shp)
+shp2 <- st_transform(shp2, crs = "EPSG:4326")
+print(shp3 <- st_crs(shp2))
+
+class(shp2)
+
+#Plot with occ_sf
+ggplot() +
+  geom_sf(data = shp2) +
+  geom_sf(data = occ_sf, color = "pink", size = 1) +
+  theme_bw()
+
+# Perform a spatial join
+library(sf)
+map_occ_joined_clip <- st_join(occ_sf, shp2)
+class(map_occ_joined_clip)
+
+map_occ__with_clip <- map_occ_joined_clip %>%
+  group_by(FYLKESNAVN, originalScientificName) %>%
+  summarize(occurrences = n())
+View(map_occ_joined_clip)
+
+# Plot the join
+library(sf)
+library(ggplot2)
+ggplot() +
+  geom_sf(data = shp) +
+  geom_sf(data = shp2) +
+  geom_sf(data = map_occ__with_clip, aes(color = occurrences), size = 0.25) +
+  theme_bw()
+
+# Perform a spatial intersection between shp2 and occ_sf
+library(sf)
+map_occ_intersect_clip <- st_intersection(occ_sf, shp2)
+class(map_occ_intersect_clip)
+
+map_occ__with_clip <- map_occ_intersect_clip %>%
+  group_by(FYLKESNAVN, originalScientificName) %>%
+  summarize(occurrences = n())
+#View(map_occ_intersect_clip)
+
+# Plot the join
+library(sf)
+library(ggplot2)
+ggplot() +
+  geom_sf(data = shp) +
+  geom_sf(data = shp2) +
+  geom_sf(data = map_occ_intersect_clip, aes(color = occurrences), size = 0.25) +
+  theme_bw()
