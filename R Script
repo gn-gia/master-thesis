@@ -147,7 +147,7 @@ library(sf)
 map_occ_intersect_clip <- st_intersection(occ_sf, shp2)
 class(map_occ_intersect_clip)
 
-map_occ__with_clip <- map_occ_intersect_clip %>%
+map_occ_intersect_clip <- map_occ_intersect_clip %>%
   group_by(FYLKESNAVN, originalScientificName) %>%
   summarize(occurrences = n())
 #View(map_occ_intersect_clip)
