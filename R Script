@@ -142,15 +142,18 @@ ggplot() +
   geom_sf(data = map_occ__with_clip, aes(color = occurrences), size = 0.25) +
   theme_bw()
 
+# garbage collector, freeing up space
+gc()
+
 # Perform a spatial intersection between shp2 and occ_sf
 library(sf)
 map_occ_intersect_clip <- st_intersection(occ_sf, shp2)
 class(map_occ_intersect_clip)
 
-map_occ_intersect_clip <- map_occ_intersect_clip %>%
+map_occ_intersect_clip_1 <- map_occ_intersect_clip %>%
   group_by(FYLKESNAVN, originalScientificName) %>%
   summarize(occurrences = n())
-#View(map_occ_intersect_clip)
+#View(map_occ_intersect_clip_1)
 
 # Plot the join
 library(sf)
@@ -158,5 +161,5 @@ library(ggplot2)
 ggplot() +
   geom_sf(data = shp) +
   geom_sf(data = shp2) +
-  geom_sf(data = map_occ_intersect_clip, aes(color = occurrences), size = 0.25) +
+  geom_sf(data = map_occ_intersect_clip_1, aes(color = occurrences), size = 0.25) +
   theme_bw()
