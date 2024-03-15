@@ -1,3 +1,6 @@
+# R version 4.3.3 (2024-02-29 ucrt) -- "Angel Food Cake"
+# Copyright (C) 2024 The R Foundation for Statistical Computing
+# Platform: x86_64-w64-mingw32/x64 (64-bit)
 # setwd("C:/Users/gngia/OneDrive/Documents/new obis")
 
 # Install robis package and run with 179=Norway and polygon excludes Svalbard and some outer marine records/areas (records from 23.02.2024)
