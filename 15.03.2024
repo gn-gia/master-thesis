@@ -1,9 +1,7 @@
-# R version 4.3.3 (2024-02-29 ucrt) -- "Angel Food Cake"
-# Copyright (C) 2024 The R Foundation for Statistical Computing
-# Platform: x86_64-w64-mingw32/x64 (64-bit)
 # setwd("C:/Users/gngia/OneDrive/Documents/new obis")
 
 # Install robis package and run with 179=Norway and polygon excludes Svalbard and some outer marine records/areas (records from 23.02.2024)
+#CHECK IF MOF IS EVEN RUNNING 
 library("dplyr")
 library("ggplot2")
 library("robis")
@@ -48,6 +46,9 @@ print(shp1 <- st_crs(shp))
 
 class(shp)
 class(occ_sf)
+
+#idk if it works for graphs, but i might also have to run maps back to back to back to have them show all at once
+par(mfrow=c(2,2))
 
 # Plot the shapefile and occurrence data
 library(sf)
@@ -102,11 +103,10 @@ ggplot() +
 library("ggplot2")
 library(sf)
 shp2 <- st_read("C:/Users/gngia/OneDrive/Documents/new obis/GIS/Kommuner_Fylker_TerrVann_Clip.shp", stringsAsFactors=FALSE)
-#View(shp)
 shp2 <- st_transform(shp2, crs = "EPSG:4326")
 print(shp3 <- st_crs(shp2))
-
 class(shp2)
+#view(shp)
 
 #Plot with occ_sf
 ggplot() +
@@ -156,16 +156,38 @@ ggplot() +
 #  geom_sf(data = map_occ_intersect_clip_1, aes(color = occurrences), size = 0.25) +
 #  theme_bw()
 
-# Perform a spatial join of shp2 and occ_sf
-library("sf")
-library("dplyr")
-shp2_occsf_union <- st_union(shp2, occ_sf)
+# Set the maximum allowed size for globals (e.g., to 2 GB)
+options(future.globals.maxSize = 2 * 1024^3)  # 2 GB in bytes
+
+# Start the union operation in a background process
+library(sf)
+library(dplyr)
+library(progress)
+library(future)
+union_process <- future::plan("multicore")
+shp2_occsf_union <- future({
+  # Perform the spatial union of shp2 and occ_sf
+  st_union(shp2, occ_sf)
+})
+
+# Print progress updates
+while (!future::resolved(shp2_occsf_union)) {
+  cat("Processing...\n")
+  Sys.sleep(1)  # Pause for 1 second
+}
+
+# Once the process is finished, print completion message
+cat("Union operation completed.\n")
+
 class(shp2_occsf_union)
 View(shp2_occsf_union)
 
 # Group data
 grouped_union <- shp2_occsf_union %%
   group_by(FYLKESNAVN, genus)
+
+# View the result
+View(grouped_union)
 
 # Plot the union
 library("ggplot2")
@@ -174,3 +196,4 @@ ggplot() +
   geom_sf(data = grouped_union, aes(color = occurrences), size = 0.25) +
   geom_sf(data = shp) +
   theme_classic()
+
