@@ -27,7 +27,7 @@ library("maps")
 map_ggplot(filtered_data, color = "blue")
 
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   
 # Transform to an sf object and set crs
 library("sf")
@@ -93,7 +93,7 @@ ggplot() +
 #  geom_sf(data = map_occ_joined_species_with_county, aes(color = FYLKESNAVN), size = 0.25) +
 #  theme_bw()
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 # Clipped shapefile with county, municipality, and clipped to be only territorial waters and change crs
 library("ggplot2")
