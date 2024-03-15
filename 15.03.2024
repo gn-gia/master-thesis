@@ -155,7 +155,6 @@ ggplot() +
 
 # Perform a spatial join of shp2 and occ_sf
 library("sf")
-library("lwgeom")
 library("dplyr")
 shp2_occsf_union <- st_union(shp2, occ_sf)
 class(shp2_occsf_union)
@@ -163,12 +162,12 @@ View(shp2_occsf_union)
 
 # Group data
 grouped_union <- shp2_occsf_union %%
-  group_by(FYLKESNAVN, Genus)
+  group_by(FYLKESNAVN, genus)
 
 # Plot the union
 library("ggplot2")
 ggplot() +
   geom_sf(data = shp2) +
-  geom_sf(data = shp2_occsf_union, aes(color = occurrences), size = 0.25) +
+  geom_sf(data = grouped_union, aes(color = occurrences), size = 0.25) +
   geom_sf(data = shp) +
   theme_classic()
