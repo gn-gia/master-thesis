@@ -191,6 +191,7 @@ ggplot() +
   theme_classic()
 
 #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 # Summarize occurrences per species per county
 county_species_summary <- map_occ_joined_clip %>%
   group_by(FYLKESNAVN, originalScientificName) %>%
@@ -225,19 +226,33 @@ print(county_species_summary)
 
 plot(shp2)
 
+# KommuneNav 
+intersect <- st_intersection(map_occ_joined_clip2, shp2)
+intersect1 <- intersect %>%
+  group_by(KOMMUNENAV) %>%
+  summarize(occurrences = n())
+View(intersect1)
+ggplot() +
+  geom_sf(data = shp) +
+  geom_sf(data = shp2, color = "red", size = 0.2, fill = NA) +
+  geom_sf(data = intersect1, aes(color = occurrences), size = 0.2) +
+  theme_classic()
+
+
 
 intersect <- st_intersection(map_occ_joined_clip2, shp2)
 intersect1 <- intersect %>%
   group_by(KOMMUNENAV) %>%
   summarize(occurrences = n())
-
-ggplot()
-  geom_sf(data = shp2) +
+View(intersect1)
+ggplot() +
   geom_sf(data = shp) +
+  geom_sf(data = shp2, color = "red", size = 0.2, fill = NA) +
   geom_sf(data = intersect1, aes(color = occurrences), size = 0.2) +
   theme_classic()
+
   
-  #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 # garbage collector, freeing up space
 #gc()
