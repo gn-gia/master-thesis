@@ -58,12 +58,22 @@ ggplot() +
   geom_sf(data = occ_sf, color = "green", size = 1) +
   theme_bw()
 
-#unique(filtered_data$country)
+unique(filtered_data$country)
+
+# Plot the shapefile2 and occurrence data
+library(sf)
+library(ggplot2)
+ggplot() +
+  geom_sf(data = shp) +
+  geom_sf(data = occ_sf, color = "green", size = 1) +
+  theme_bw()
+
+unique(filtered_data$country)
 
 # Perform a spatial join
-#library(sf)
-#map_occ_joined <- st_join(occ_sf, shp)
-#class(map_occ_joined)
+library(sf)
+map_occ_joined <- st_join(occ_sf, shp)
+class(map_occ_joined)
 
 # Now you have the marine organism data associated with county information
 # Count the occurrences of each species within each county:
@@ -116,13 +126,20 @@ ggplot() +
 
 # Perform a spatial join
 library(sf)
-map_occ_joined_clip <- st_join(occ_sf, shp2)
-class(map_occ_joined_clip)
+map_occ_joined_clip1 <- st_join(occ_sf, shp2)
+class(map_occ_joined_clip1)
 
-map_occ__with_clip <- map_occ_joined_clip %>%
+map_occ__with_clip1 <- map_occ_joined_clip %>%
+  group_by(FYLKESNAVN) %>%
+  summarize(species_count = n_distinct(originalScientificName))
+  
+View(map_occ_joined_clip1)
+
+# Count the number of occurrences of each species within each county
+ map_occ_joined_clip2 <- map_occ_joined_clip1 %>%
   group_by(FYLKESNAVN, originalScientificName) %>%
   summarize(occurrences = n())
-View(map_occ_joined_clip)
+View(map_occ_joined_clip2)
 
 # Plot the join
 library(sf)
@@ -130,8 +147,97 @@ library(ggplot2)
 ggplot() +
   geom_sf(data = shp) +
   geom_sf(data = shp2) +
-  geom_sf(data = map_occ__with_clip, aes(color = occurrences), size = 0.25) +
+  geom_sf(data = map_occ__with_clip1, aes(color = occurrences), size = 0.25) +
   theme_classic()
+
+# Count the number of occurrences of each species within each county
+map_occ_joined_clip3 <- map_occ_joined_clip1 %>%
+  group_by(FYLKESNAVN, genus) %>%
+  summarize(occurrences = n())
+View(map_occ_joined_clip3)
+
+# Plot the join
+library(sf)
+library(ggplot2)
+ggplot() +
+  geom_sf(data = shp) +
+  geom_sf(data = shp2) +
+  geom_sf(data = map_occ_joined_clip3, aes(color = occurrences), size = 0.25) +
+  theme_classic()
+
+
+# Count the number of occurrences of each species within each county
+map_occ_joined_clip4 <- map_occ_joined_clip1 %>%
+  group_by(FYLKESNAVN, family) %>%
+  summarize(occurrences = n())
+View(map_occ_joined_clip4)
+
+# Plot the join !!!!!!!!!!!!!!!!!!!!
+library(sf)
+library(ggplot2)
+ggplot() +
+  geom_sf(data = shp) +
+  geom_sf(data = shp2) +
+  geom_sf(data = map_occ_joined_clip4, aes(color = occurrences), size = 0.25) +
+  theme_classic()
+
+# Plot the join
+library(sf)
+library(ggplot2)
+ggplot() +
+  geom_sf(data = shp) +
+  geom_sf(data = shp2) +
+  geom_sf(data = map_occ_joined_clip4, aes(color = occurrences), size = 0.25) +
+  theme_classic()
+
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+# Summarize occurrences per species per county
+county_species_summary <- map_occ_joined_clip %>%
+  group_by(FYLKESNAVN, originalScientificName) %>%
+  summarize(occurrences = n())
+
+# Plot occurrences for each county separately
+for (county_name in unique(county_species_summary$FYLKESNAVN)) {
+  county_data <- county_species_summary %>%
+    filter(FYLKESNAVN == county_name)
+
+}
+
+# Viewable table for each county
+for (county_name in unique(county_species_summary$FYLKESNAVN)) {
+  county_data <- county_species_summary %>%
+    filter(FYLKESNAVN == county_name)
+  
+  print(paste("County:", county_name))
+  print(county_data)
+}
+
+# Combined table with occurrences for all counties
+print("Combined Table:")
+print(county_species_summary)
+
+
+#ggplot() +
+#  geom_sf(data = shp2) +
+#  geom_sf(data = county_species_summary, aes(color = occurrences), size = 0.25) +
+#  theme_classic() +
+#  labs(title = paste("Occurrences in ", county_name))
+
+plot(shp2)
+
+
+intersect <- st_intersection(map_occ_joined_clip2, shp2)
+intersect1 <- intersect %>%
+  group_by(KOMMUNENAV) %>%
+  summarize(occurrences = n())
+
+ggplot()
+  geom_sf(data = shp2) +
+  geom_sf(data = shp) +
+  geom_sf(data = intersect1, aes(color = occurrences), size = 0.2) +
+  theme_classic()
+  
+  #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 # garbage collector, freeing up space
 #gc()
@@ -178,4 +284,3 @@ ggplot() +
 #  geom_sf(data = grouped_union, aes(color = occurrences), size = 0.25) +
 #  geom_sf(data = shp) +
 #  theme_classic()
-
