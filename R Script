@@ -48,7 +48,7 @@ class(shp)
 class(occ_sf)
 
 #idk if it works for graphs, but i might also have to run maps back to back to back to have them show all at once
-par(mfrow=c(2,2))
+#par(mfrow=c(2,2))
 
 # Plot the shapefile and occurrence data
 library(sf)
@@ -68,7 +68,7 @@ ggplot() +
   geom_sf(data = occ_sf, color = "green", size = 1) +
   theme_bw()
 
-unique(filtered_data$country)
+#unique(filtered_data$country)
 
 # Perform a spatial join
 library(sf)
@@ -129,15 +129,15 @@ library(sf)
 map_occ_joined_clip1 <- st_join(occ_sf, shp2)
 class(map_occ_joined_clip1)
 
+
 map_occ__with_clip1 <- map_occ_joined_clip %>%
   group_by(FYLKESNAVN) %>%
   summarize(species_count = n_distinct(originalScientificName))
-  
 View(map_occ_joined_clip1)
 
 # Count the number of occurrences of each species within each county
  map_occ_joined_clip2 <- map_occ_joined_clip1 %>%
-  group_by(FYLKESNAVN, originalScientificName) %>%
+  group_by(KOMMUNENAV, genus) %>%
   summarize(occurrences = n())
 View(map_occ_joined_clip2)
 
@@ -147,48 +147,48 @@ library(ggplot2)
 ggplot() +
   geom_sf(data = shp) +
   geom_sf(data = shp2) +
-  geom_sf(data = map_occ__with_clip1, aes(color = occurrences), size = 0.25) +
+  geom_sf(data = map_occ_joined_clip2, aes(color = occurrences), size = 0.25) +
   theme_classic()
 
 # Count the number of occurrences of each species within each county
-map_occ_joined_clip3 <- map_occ_joined_clip1 %>%
-  group_by(FYLKESNAVN, genus) %>%
-  summarize(occurrences = n())
-View(map_occ_joined_clip3)
+#map_occ_joined_clip3 <- map_occ_joined_clip1 %>%
+#  group_by(FYLKESNAVN, genus) %>%
+#  summarize(occurrences = n())
+#View(map_occ_joined_clip3)
 
 # Plot the join
-library(sf)
-library(ggplot2)
-ggplot() +
-  geom_sf(data = shp) +
-  geom_sf(data = shp2) +
-  geom_sf(data = map_occ_joined_clip3, aes(color = occurrences), size = 0.25) +
-  theme_classic()
+#library(sf)
+#library(ggplot2)
+#ggplot() +
+#  geom_sf(data = shp) +
+#  geom_sf(data = shp2) +
+#  geom_sf(data = map_occ_joined_clip3, aes(color = occurrences), size = 0.25) +
+#  theme_classic()
 
 
 # Count the number of occurrences of each species within each county
-map_occ_joined_clip4 <- map_occ_joined_clip1 %>%
-  group_by(FYLKESNAVN, family) %>%
-  summarize(occurrences = n())
-View(map_occ_joined_clip4)
+#map_occ_joined_clip4 <- map_occ_joined_clip1 %>%
+#  group_by(FYLKESNAVN, family) %>%
+#  summarize(occurrences = n())
+#View(map_occ_joined_clip4)
 
 # Plot the join !!!!!!!!!!!!!!!!!!!!
-library(sf)
-library(ggplot2)
-ggplot() +
-  geom_sf(data = shp) +
-  geom_sf(data = shp2) +
-  geom_sf(data = map_occ_joined_clip4, aes(color = occurrences), size = 0.25) +
-  theme_classic()
+#library(sf)
+#library(ggplot2)
+#ggplot() +
+#  geom_sf(data = shp) +
+#  geom_sf(data = shp2) +
+#  geom_sf(data = map_occ_joined_clip4, aes(color = occurrences), size = 0.25) +
+#  theme_classic()
 
 # Plot the join
-library(sf)
-library(ggplot2)
-ggplot() +
-  geom_sf(data = shp) +
-  geom_sf(data = shp2) +
-  geom_sf(data = map_occ_joined_clip4, aes(color = occurrences), size = 0.25) +
-  theme_classic()
+#library(sf)
+#library(ggplot2)
+#ggplot() +
+#  geom_sf(data = shp) +
+#  geom_sf(data = shp2) +
+#  geom_sf(data = map_occ_joined_clip4, aes(color = occurrences), size = 0.25) +
+#  theme_classic()
 
 #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -227,48 +227,50 @@ print(county_species_summary)
 plot(shp2)
 
 # KommuneNav 
-intersect <- st_intersection(map_occ_joined_clip2, shp2)
-intersect1 <- intersect %>%
-  group_by(KOMMUNENAV) %>%
-  summarize(occurrences = n())
-View(intersect1)
-ggplot() +
-  geom_sf(data = shp) +
-  geom_sf(data = shp2, color = "red", size = 0.2, fill = NA) +
-  geom_sf(data = intersect1, aes(color = occurrences), size = 0.2) +
-  theme_classic()
+#intersect <- st_intersection(map_occ_joined_clip2, shp2)
+#intersect1 <- intersect %>%
+#  group_by(KOMMUNENAV) %>%
+#  summarize(occurrences = n())
+#View(intersect1)
+
+#ggplot() +
+#  geom_sf(data = shp) +
+#  geom_sf(data = shp2, color = "red", size = 0.2, fill = NA) +
+#  geom_sf(data = intersect1, aes(color = occurrences), size = 0.2) +
+##  theme_classic()
 
 
-#Intersect joined data with shp2
-intersect <- st_intersection(map_occ_joined_clip2, shp2)
 
-intersect1 <- intersect %>%
-  group_by(KOMMUNENAV, originalScientificName) %>%
-  summarize(occurrences = n())
-View(intersect1)
-
-
-ggplot() +
-  geom_sf(data = shp) +
-  geom_sf(data = shp2, color = "red", size = 0.2, fill = NA) +
-  geom_sf(data = intersect1, aes(color = occurrences), size = 0.2) +
-  theme_classic()
+# Count the number of occurrences of each genus within each kommune
+#map_occ_joined_clip1 <- st_join(occ_sf, shp2)
+#map_occ_joined_clip5 <- map_occ_joined_clip1 %>%
+#  group_by(KOMMUNENAV, genus) %>%
+#  summarize(occurrences = n())
+#View(map_occ_joined_clip5)
 
 #Intersect joined data with shp2
-intersect2 <- st_intersection(map_occ_joined_clip1, shp2)
+#intersect <- st_intersection(map_occ_joined_clip5, shp2)
 
-intersect2 <- intersect2 %%
-  group_by(KOMMUNENAV, genus) %%
-  summarize(occurrences = n())
+#intersect1 <- intersect %>%
+#  group_by(KOMMUNENAV, originalScientificName) %>%
+#  summarize(occurrences = n())
+#View(intersect1)
+
+#ggplot() +
+#  geom_sf(data = shp) +
+#  geom_sf(data = shp2, color = "red", size = 0.2, fill = NA) +
+#  geom_sf(data = intersect1, aes(color = occurrences), size = 0.2) +
+#  theme_classic()
+
+# Intersect joined data with shp2
+intersect2 <- st_intersection(map_occ_joined_clip2, shp2)
 View(intersect2)
 
 ggplot() +
   geom_sf(data = shp) +
-  geom_sf(data = shp2, color = "white", size = 0.2, fill = NA) +
-  geom_sf(data = intersect2, aes(color = genus), size = 0.2)+
+  geom_sf(data = shp2, color = "gold", size = 0.2, fill = NA) +
+  geom_sf(data = intersect2, aes(color = occurrences), size = 0.2)+
   theme_bw()
-
-
 
 
 #summarise(map_occ_joined_clip3, by = "FYLKESNAVN", group = "genus")
