@@ -239,63 +239,44 @@ ggplot() +
   theme_classic()
 
 
-
+#Intersect joined data with shp2
 intersect <- st_intersection(map_occ_joined_clip2, shp2)
+
 intersect1 <- intersect %>%
-  group_by(KOMMUNENAV) %>%
+  group_by(KOMMUNENAV, originalScientificName) %>%
   summarize(occurrences = n())
 View(intersect1)
+
+
 ggplot() +
   geom_sf(data = shp) +
   geom_sf(data = shp2, color = "red", size = 0.2, fill = NA) +
   geom_sf(data = intersect1, aes(color = occurrences), size = 0.2) +
   theme_classic()
 
-  
-#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+#Intersect joined data with shp2
+intersect2 <- st_intersection(map_occ_joined_clip1, shp2)
 
-# garbage collector, freeing up space
-#gc()
+intersect2 <- intersect2 %%
+  group_by(KOMMUNENAV, genus) %%
+  summarize(occurrences = n())
+View(intersect2)
 
-# Perform a spatial intersection between shp2 and occ_sf
-#library(sf)
-#map_occ_intersect_clip <- st_intersection(occ_sf, shp2)
-#class(map_occ_intersect_clip)
-#view(map_occ_intersect_clip)
+ggplot() +
+  geom_sf(data = shp) +
+  geom_sf(data = shp2, color = "white", size = 0.2, fill = NA) +
+  geom_sf(data = intersect2, aes(color = genus), size = 0.2)+
+  theme_bw()
 
-#map_occ_intersect_clip_1 <- map_occ_intersect_clip %>%
-#  group_by(FYLKESNAVN, originalScientificName) %>%
-#  summarize(occurrences = n())
-#View(map_occ_intersect_clip_1)
 
-# Plot the join
-#library(sf)
-#library(ggplot2)
-#ggplot() +
-#  geom_sf(data = shp) +
-#  geom_sf(data = shp2) +
-#  geom_sf(data = map_occ_intersect_clip_1, aes(color = occurrences), size = 0.25) +
-#  theme_bw()
 
-# Perform the spatial union of shp2 and occ_sf
-#library(sf)
-#library(dplyr)
-#shp2_occsf_union <-  st_union(shp2, occ_sf)
-#class(shp2_occsf_union)
-#View(shp2_occsf_union)
 
-# Group data
-#grouped_union <- shp2_occsf_union %%
-#  group_by(FYLKESNAVN, genus)
- # summarize(occurrences = n())
+#summarise(map_occ_joined_clip3, by = "FYLKESNAVN", group = "genus")
+#library("dplyr")
 
-# View the result
-#View(grouped_union)
+#summary <- map_occ_joined_clip3 %>%
+#  group_by(FYLKESNAVN, genus) %>%
+#  summarise(total_occurrences = sum(occurrences))
 
-# Plot the union
-#library("ggplot2")
-#ggplot() +
-#  geom_sf(data = shp2) +
-#  geom_sf(data = grouped_union, aes(color = occurrences), size = 0.25) +
-#  geom_sf(data = shp) +
-#  theme_classic()
+# Print the summary
+#print(summary)
