@@ -137,9 +137,11 @@ View(map_occ_joined_clip1)
 
 # Count the number of occurrences of each species within each county
  map_occ_joined_clip2 <- map_occ_joined_clip1 %>%
-  group_by(KOMMUNENAV, genus) %>%
+  group_by(KOMMUNENAV, genus, aphiaID) %>%
   summarize(occurrences = n())
 View(map_occ_joined_clip2)
+
+unique(map_occ_joined_clip2$KOMMUNENAV)
 
 # Plot the join
 library(sf)
@@ -262,23 +264,50 @@ plot(shp2)
 #  geom_sf(data = intersect1, aes(color = occurrences), size = 0.2) +
 #  theme_classic()
 
-# Intersect joined data with shp2
+#Intersect joined data with shp2
 intersect2 <- st_intersection(map_occ_joined_clip2, shp2)
 View(intersect2)
 
+#filter table by Herøy and look at the weird thing going on there
+unique(intersect2$KOMMUNENAV)
+unique(intersect2$genus)
+
+
+# map_occ_joined_clip2 extends beyond shp2
+ggplot() +
+  geom_sf(data = shp) +
+  geom_sf(data = shp2, color = "gold", size = 0.2, fill = NA) +
+  geom_sf(data = map_occ_joined_clip2, aes(color = occurrences), size = 0.2)+
+  theme_bw()
+
+# intersect2 fits within shp2
 ggplot() +
   geom_sf(data = shp) +
   geom_sf(data = shp2, color = "gold", size = 0.2, fill = NA) +
   geom_sf(data = intersect2, aes(color = occurrences), size = 0.2)+
   theme_bw()
 
+# Define and perform replacements using dplyr
+library(dplyr)
+unique(intersect2$FYLKESNAVN)
+replacements <- c("\"Troms - Romsa - Tromssa\"" = "Troms",
+                  "\"Nordland - Nordlánnda\"" = "Nordland",
+                  "\"Trøndelag - Trööndelage\""  = "Trøndelag",
+                  "\"Finnmark - Finnmárku - Finmarkku\"" = "Finnmark",
+                  "\"Møre og Romsdal\"" = "Møre og Romsdal")
 
-#summarise(map_occ_joined_clip3, by = "FYLKESNAVN", group = "genus")
-#library("dplyr")
+intersect3 <- intersect2 %>%
+  mutate(FYLKESNAVN = replace(FYLKESNAVN, FYLKESNAVN %in% names(replacements), replacements[FYLKESNAVN]))
+View(intersect3)
 
-#summary <- map_occ_joined_clip3 %>%
-#  group_by(FYLKESNAVN, genus) %>%
-#  summarise(total_occurrences = sum(occurrences))
+# Filter shp2 to include only the geometry for the county of interest
+shp2_county <- shp2[shp2$FYLKESNAVN == "\"Troms - Romsa - Tromssa\"", ]
 
-# Print the summary
-#print(summary)
+# Filter intersect2 to include only occurrences within the county of interest
+intersect3_county <- intersect3[intersect3$FYLKESNAVN == "Troms", ]
+
+# Plotting code
+ggplot() +
+  geom_sf(data = shp2_county, color = "gold", size = 0.2, fill = NA) +
+  geom_sf(data = intersect3_county, aes(color = occurrences), size = 0.2, fill = NA) +
+  theme_bw()
