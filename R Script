@@ -373,5 +373,22 @@ group_sum <- map_occ_joined_clip1 %>%
   summarize(occurrences = n())
 View(group_sum)
 
+############################ STATISTICS #######################################################
+# Count the number of occurrences of each species within each county
+group_sum <- map_occ_joined_clip1 %>%
+  group_by(FYLKESNAVN, KOMMUNENAV, genus, aphiaID) %>%
+  summarize(occurrences = n())
+View(group_sum)
+
+install.packages("worrms")
+library(worrms)
+
+aphiaIDs <- unique(group_sum$aphiaID)
+print(aphiaIDs)
+taxonomic_names <- sapply(aphiaIDs, wm_id2name)
+# Print the taxonomic names
+print(taxonomic_names)
+
+
 unique(map_occ_joined_clip2$KOMMUNENAV)
 
