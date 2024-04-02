@@ -146,6 +146,11 @@ ggplot() +
   geom_sf(data = intersect2, aes(color = occurrences), size = 0.2)+
   theme_bw()
 
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+Encoding("")
+options(encoding = "UTF-8")
+# https://symbl.cc/en/unicode-table/#latin-1-supplement
+
 # Define and perform replacements using dplyr
 library(dplyr)
 unique(intersect2$FYLKESNAVN)
@@ -186,35 +191,35 @@ ggplot() +
 
 ####################### MØRE OG ROMSDAL #######################################
 # Filter shp2 to include only the geometry for the county of interest
-shp2_akershus <- shp2[shp2$FYLKESNAVN == "\"Møre og Romsdal\"", ]
-intersect2_akershus <- intersect2 %>%
-  filter(FYLKESNAVN == "\"Møre og Romsdal\"",)
+shp2_moere <- shp2[shp2$FYLKESNAVN == "\"M\u00F8re og Romsdal\"", ]
+intersect2_moere <- intersect2 %>%
+  filter(FYLKESNAVN == "\"M\u00F8re og Romsdal\"",)
 
 # Extract x and y coordinates from geometry column
-centroid_data3 <- st_centroid(shp2_akershus)
+centroid_data3 <- st_centroid(shp2_moere)
 centroid_data3 <- cbind(centroid_data3, st_coordinates(centroid_data3))
 
 # Plotting code with labels
 ggplot() +
-  geom_sf(data = shp2_akershus, color = "gold", size = 0.2, fill = NA) +
-  geom_sf(data = intersect2_akershus, aes(color = occurrences), size = 0.2, fill = NA) +
+  geom_sf(data = shp2_moere, color = "gold", size = 0.2, fill = NA) +
+  geom_sf(data = intersect2_moere, aes(color = occurrences), size = 0.2, fill = NA) +
   geom_text(data = centroid_data3, aes(label = KOMMUNENAV, x = X, y = Y), size = 3, color = "black") +
   theme_bw()
 
 ####################### ØSTFOLD #######################################
 # Filter shp2 to include only the geometry for the county of interest
-shp2_akershus <- shp2[shp2$FYLKESNAVN == "Østfold", ]
-intersect2_akershus <- intersect2 %>%
-  filter(FYLKESNAVN == "Østfold",)
+shp2_oestfold <- shp2[shp2$FYLKESNAVN == "\u00D8stfold", ]
+intersect2_oestfold <- intersect2 %>%
+  filter(FYLKESNAVN == "\u00D8stfold",)
 
 # Extract x and y coordinates from geometry column
-centroid_data4 <- st_centroid(shp2_akershus)
+centroid_data4 <- st_centroid(shp2_oestfold)
 centroid_data4 <- cbind(centroid_data4, st_coordinates(centroid_data4))
 
 # Plotting code with labels
 ggplot() +
-  geom_sf(data = shp2_akershus, color = "gold", size = 0.2, fill = NA) +
-  geom_sf(data = intersect2_akershus, aes(color = occurrences), size = 0.2, fill = NA) +
+  geom_sf(data = shp2_oestfold, color = "gold", size = 0.2, fill = NA) +
+  geom_sf(data = intersect2_oestfold, aes(color = occurrences), size = 0.2, fill = NA) +
   geom_text(data = centroid_data4, aes(label = KOMMUNENAV, x = X, y = Y), size = 3, color = "black") +
   theme_bw()
 
@@ -237,21 +242,12 @@ ggplot() +
 
 ####################### NORDLAND #######################################
 # Filter shp2 to include only the geometry for the county of interest
-
-text <- "Nordlánnda"
-
-# Convert non-ASCII characters to ASCII
-ascii_text <- iconv(text, "UTF-8", "ASCII", sub = "")
-
-# Print the result
-print(ascii_text)
-
-shp2_nordland <- shp2[shp2$FYLKESNAVN == "\"Nordland - Nordlánnda\"" , ]
-intersect2_nordland <- intersect2 %>% filter(FYLKESNAVN == "\"Nordland - Nordlánnda\"" , )
+shp2_nordland <- shp2[shp2$FYLKESNAVN == "\"Nordland - Nordl\u00E1nnda\"" , ]
+intersect2_nordland <- intersect2 %>% filter(FYLKESNAVN == "\"Nordland - Nordl\u00E1nnda\"" , )
 
 # Extract centroid coordinates from geometry column
 centroid_data6 <- st_centroid(shp2_nordland)
-str(centroid_data6)
+centroid_data6 <- cbind(centroid_data6, st_coordinates(centroid_data6))
 
 # Plotting code with labels
 ggplot() +
@@ -278,27 +274,39 @@ ggplot() +
   theme_bw()
 
 ####################### TRØNDELAG #######################################
-Encoding("")
-options(encoding = "UTF-8")
-
 # Filter shp2 to include only the geometry for the county of interest
-shp2_trondelag <- shp2[shp2$FYLKESNAVN == "\"Trøndelag - Trööndelage\"", ]
-intersect2_trondelag <- intersect2 %>%
-  filter(FYLKESNAVN == "\"Trøndelag - Trööndelage\"",)
+shp2_troendelag <- shp2[shp2$FYLKESNAVN == "\"Tr\u00F8ndelag - Tr\u00F6\u00F6ndelage\"" , ]
+intersect2_troendelag <- intersect2 %>%
+  filter(FYLKESNAVN == "\"Tr\u00F8ndelag - Tr\u00F6\u00F6ndelage\"")
 
 # Extract x and y coordinates from geometry column
-centroid_data8 <- st_centroid(shp2_trondelag)
+centroid_data8 <- st_centroid(shp2_troendelag)
 centroid_data8 <- cbind(centroid_data8, st_coordinates(centroid_data8))
 
 # Plotting code with labels
 ggplot() +
-  geom_sf(data = shp2_trondelag, color = "gold", size = 0.2, fill = NA) +
-  geom_sf(data = intersect2_trondelag, aes(color = occurrences), size = 0.2, fill = NA) +
+  geom_sf(data = shp2_troendelag, color = "gold", size = 0.2, fill = NA) +
+  geom_sf(data = intersect2_troendelag, aes(color = occurrences), size = 0.2, fill = NA) +
   geom_text(data = centroid_data8, aes(label = KOMMUNENAV, x = X, y = Y), size = 3, color = "black") +
   theme_bw()
 
 ####################### FINNMARK #######################################
-"\"Finnmark - Finnmárku - Finmarkku\""
+# Filter shp2 to include only the geometry for the county of interest
+shp2_finnmark <- shp2[shp2$FYLKESNAVN == "\"Finnmark - Finnm\u00E1rku - Finmarkku\"", ]
+intersect2_finnmark <- intersect2 %>%
+  filter(FYLKESNAVN == "\"Finnmark - Finnm\u00E1rku - Finmarkku\"",)
+
+# Extract x and y coordinates from geometry column
+centroid_data9 <- st_centroid(shp2_finnmark)
+centroid_data9 <- cbind(centroid_data9, st_coordinates(centroid_data9))
+
+# Plotting code with labels
+ggplot() +
+  geom_sf(data = shp2_finnmark, color = "gold", size = 0.2, fill = NA) +
+  geom_sf(data = intersect2_finnmark, aes(color = occurrences), size = 0.2, fill = NA) +
+  geom_text(data = centroid_data9, aes(label = KOMMUNENAV, x = X, y = Y), size = 3, color = "black") +
+  theme_bw()
+
 ####################### AGDER #######################################
 # Filter shp2 to include only the geometry for the county of interest
 shp2_agder <- shp2[shp2$FYLKESNAVN == "Agder", ]
@@ -391,6 +399,8 @@ group_sum <- map_occ_joined_clip1 %>%
   summarize(occurrences = n())
 View(group_sum)
 
+
+
 #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%5
 # WORMS
 install.packages("worrms")
@@ -415,3 +425,5 @@ print(taxonomic_names)
 #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 # Number of occurrences per county / all occurrences to find % of occurrences for each county
+
+
