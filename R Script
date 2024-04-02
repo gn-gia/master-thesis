@@ -11,7 +11,7 @@ o <- occurrence(areaid = "179", mof = TRUE, geometry = "POLYGON ((34.4004 70.253
            3.5332 61.9968, 3.5332 58.3279, 7.2598 57.2790, 11.0567 58.4017, 12.4629 59.0948, 11.3379 60.6473,
            8.6660 60.5783, 8.3145 62.2924, 16.3301 65.6220, 17.2442 67.6293, 20.1973 68.7523,
            23.9238 69.6998, 26.5254 70.1344, 29.5488 69.5284, 32.2910 69.4051, 34.4004 70.2535))")
-#unique(o$kingdom)
+unique(o$kingdom)
 #View(o)
 
 # Filter rows based on the specified conditions
@@ -151,8 +151,6 @@ Encoding("")
 options(encoding = "UTF-8")
 # https://symbl.cc/en/unicode-table/#latin-1-supplement
 
-# Define and perform replacements using dplyr
-library(dplyr)
 unique(intersect2$FYLKESNAVN)
 
 ####################### TROMS #######################################
@@ -399,7 +397,42 @@ group_sum <- map_occ_joined_clip1 %>%
   summarize(occurrences = n())
 View(group_sum)
 
+# % of occurrences for each county compared to sum of total occurrences
+ratios <- c(
+  (sum(intersect2_troms$occurrences) / sum(intersect2$occurrences)) * 100, #6.229644003
+  (sum(intersect2_akershus$occurrences) / sum(intersect2$occurrences)) * 100, #1.100857263
+  (sum(intersect2_moere$occurrences) / sum(intersect2$occurrences)) * 100, #11.697687090
+  (sum(intersect2_oestfold$occurrences) / sum(intersect2$occurrences)) * 100, #2.028388064
+  (sum(intersect2_vestland$occurrences) / sum(intersect2$occurrences)) * 100, #9.249173432
+  (sum(intersect2_nordland$occurrences) / sum(intersect2$occurrences)) * 100, #18.547657381
+  (sum(intersect2_rogaland$occurrences) / sum(intersect2$occurrences)) * 100, #7.933568873
+  (sum(intersect2_troendelag$occurrences) / sum(intersect2$occurrences)) * 100, #16.600138563
+  (sum(intersect2_finnmark$occurrences) / sum(intersect2$occurrences)) * 100, #7.465612079
+  (sum(intersect2_agder$occurrences) / sum(intersect2$occurrences)) * 100, #13.005648520
+  (sum(intersect2_telemark$occurrences) / sum(intersect2$occurrences)) * 100, #3.283340689
+  (sum(intersect2_vestfold$occurrences) / sum(intersect2$occurrences)) * 100, #2.719721494
+  (sum(intersect2_buskerud$occurrences) / sum(intersect2$occurrences)) * 100, #0.009615551
+  (sum(intersect2_oslo$occurrences) / sum(intersect2$occurrences)) * 100 #0.128946999
+  )
+print(ratios)
 
+# KOMMUNENAV is connected with Shape Area
+# how to get relative shape area comparisons so that the percentage of occ data can be compared to size
+areas <- intersect2 %>%
+  group_by(Shape_Area, KOMMUNENAV, FYLKESNAVN) %>%
+  summarize(occurrences = n())
+View(areas)
+
+#SUM ALL KOMMUNENAVN AND SHAPE AREAS TO EACH COUNTY 
+
+# Find the maximum area
+areas <- max(counties_data$Shape_Area)
+
+# Calculate relative sizes
+counties_data$Relative_Size <- counties_data$Shape_Area / max_area
+
+# Print the relative sizes
+print(counties_data$Relative_Size)
 
 #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%5
 # WORMS
@@ -409,21 +442,10 @@ library(worrms)
 
 aphiaIDs <- unique(group_sum$aphiaID)
 print(aphiaIDs)
-# It looks like the aphiaID does not give more info on the name but maybe it does for 
-# distrubution or something -- moving on for now
-wm_distribution <- function(aphiaIDs, `length(aphiaIDs) == 1`) {
-  assert(id, c("numeric", "integer"))
-  assert_len(id, 1)
-  wm_GET(file.path(wm_base(), "AphiaDistributionsByAphiaID", id), ...)
-}
-wm_id2name(id = 106485)
 
-taxonomic_names <- sapply(aphiaIDs, wm_id2name)
-# Print the taxonomic names
-print(taxonomic_names)
+# plural version, via id or name
+wm_class <- wm_classification_(id = c(aphiaIDs))
+wm_distrib <- wm_distribution_(id = c(aphiaIDs)) #got a bunch of warnings that there is no content
+
 
 #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-# Number of occurrences per county / all occurrences to find % of occurrences for each county
-
-
