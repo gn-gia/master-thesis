@@ -186,9 +186,9 @@ ggplot() +
 
 ####################### MØRE OG ROMSDAL #######################################
 # Filter shp2 to include only the geometry for the county of interest
-shp2_akershus <- shp2[shp2$FYLKESNAVN == "Akershus", ]
+shp2_akershus <- shp2[shp2$FYLKESNAVN == "\"Møre og Romsdal\"", ]
 intersect2_akershus <- intersect2 %>%
-  filter(FYLKESNAVN == "Akershus",)
+  filter(FYLKESNAVN == "\"Møre og Romsdal\"",)
 
 # Extract x and y coordinates from geometry column
 centroid_data3 <- st_centroid(shp2_akershus)
@@ -203,9 +203,9 @@ ggplot() +
 
 ####################### ØSTFOLD #######################################
 # Filter shp2 to include only the geometry for the county of interest
-shp2_akershus <- shp2[shp2$FYLKESNAVN == "Akershus", ]
+shp2_akershus <- shp2[shp2$FYLKESNAVN == "Østfold", ]
 intersect2_akershus <- intersect2 %>%
-  filter(FYLKESNAVN == "Akershus",)
+  filter(FYLKESNAVN == "Østfold",)
 
 # Extract x and y coordinates from geometry column
 centroid_data4 <- st_centroid(shp2_akershus)
@@ -246,8 +246,8 @@ ascii_text <- iconv(text, "UTF-8", "ASCII", sub = "")
 # Print the result
 print(ascii_text)
 
-shp2_nordland <- shp2[shp2$FYLKESNAVN == "\"Nordland - Nordlnnda\"", ]
-intersect2_nordland <- intersect2 %>% filter(FYLKESNAVN == "\"Nordland -  Nordlnnda\"", )
+shp2_nordland <- shp2[shp2$FYLKESNAVN == "\"Nordland - Nordlánnda\"" , ]
+intersect2_nordland <- intersect2 %>% filter(FYLKESNAVN == "\"Nordland - Nordlánnda\"" , )
 
 # Extract centroid coordinates from geometry column
 centroid_data6 <- st_centroid(shp2_nordland)
@@ -278,9 +278,27 @@ ggplot() +
   theme_bw()
 
 ####################### TRØNDELAG #######################################
+Encoding("")
+options(encoding = "UTF-8")
+
+# Filter shp2 to include only the geometry for the county of interest
+shp2_trondelag <- shp2[shp2$FYLKESNAVN == "\"Trøndelag - Trööndelage\"", ]
+intersect2_trondelag <- intersect2 %>%
+  filter(FYLKESNAVN == "\"Trøndelag - Trööndelage\"",)
+
+# Extract x and y coordinates from geometry column
+centroid_data8 <- st_centroid(shp2_trondelag)
+centroid_data8 <- cbind(centroid_data8, st_coordinates(centroid_data8))
+
+# Plotting code with labels
+ggplot() +
+  geom_sf(data = shp2_trondelag, color = "gold", size = 0.2, fill = NA) +
+  geom_sf(data = intersect2_trondelag, aes(color = occurrences), size = 0.2, fill = NA) +
+  geom_text(data = centroid_data8, aes(label = KOMMUNENAV, x = X, y = Y), size = 3, color = "black") +
+  theme_bw()
 
 ####################### FINNMARK #######################################
-
+"\"Finnmark - Finnmárku - Finmarkku\""
 ####################### AGDER #######################################
 # Filter shp2 to include only the geometry for the county of interest
 shp2_agder <- shp2[shp2$FYLKESNAVN == "Agder", ]
@@ -373,22 +391,27 @@ group_sum <- map_occ_joined_clip1 %>%
   summarize(occurrences = n())
 View(group_sum)
 
-############################ STATISTICS #######################################################
-# Count the number of occurrences of each species within each county
-group_sum <- map_occ_joined_clip1 %>%
-  group_by(FYLKESNAVN, KOMMUNENAV, genus, aphiaID) %>%
-  summarize(occurrences = n())
-View(group_sum)
-
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%5
+# WORMS
 install.packages("worrms")
+citation(package = 'worrms')
 library(worrms)
 
 aphiaIDs <- unique(group_sum$aphiaID)
 print(aphiaIDs)
+# It looks like the aphiaID does not give more info on the name but maybe it does for 
+# distrubution or something -- moving on for now
+wm_distribution <- function(aphiaIDs, `length(aphiaIDs) == 1`) {
+  assert(id, c("numeric", "integer"))
+  assert_len(id, 1)
+  wm_GET(file.path(wm_base(), "AphiaDistributionsByAphiaID", id), ...)
+}
+wm_id2name(id = 106485)
+
 taxonomic_names <- sapply(aphiaIDs, wm_id2name)
 # Print the taxonomic names
 print(taxonomic_names)
 
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-unique(map_occ_joined_clip2$KOMMUNENAV)
-
+# Number of occurrences per county / all occurrences to find % of occurrences for each county
