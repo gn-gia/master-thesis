@@ -5,8 +5,8 @@ The purpose of this repo is to record the R script used to analyse species occur
 
 ArcGIS Pro 3.2 (3.2.49743) and R version 4.3.3 (Angel Food Cake) are used.
  
-Helpful links:
-- https://obis.org/
+- Helpful links:
+  - https://obis.org/
 - https://api.obis.org/
    - https://manual.obis.org/
    https://mapper.obis.org/
@@ -24,7 +24,6 @@ Helpful links:
    https://github.com/iobis/robis/blob/master/vignettes/getting-started.Rmd
    
 Author: G. Giannone
-MSc Biology, Norwegian University of Science and Technology 
-Trondheim, Norway
+MSc Biology, Norwegian University of Science and Technology - Trondheim, Norway
 
 License: MIT License, Copyright (c) 2024 gn-gia
