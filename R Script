@@ -1,6 +1,17 @@
 # setwd("C:/Users/gngia/OneDrive/Documents/new obis")
 
-# Install robis package and run with 179=Norway and polygon excludes Svalbard and some outer marine records/areas (records from 23.02.2024)
+
+install.pacakges("dplyr")
+install.pacakges("robis")
+install.pacakges("ggplot2")
+install.pacakges("sf")
+install.pacakges("worrms")
+install.pacakges("patchwork")
+
+citation(package = 'worrms')
+
+
+# Run with 179=Norway and polygon excludes Svalbard and some outer marine records/areas (records from 23.02.2024)
 #CHECK IF MOF IS EVEN RUNNING 
 library("dplyr")
 library("ggplot2")
@@ -128,8 +139,8 @@ View(intersect2)
 intersect3 <- intersect2[!(intersect2$KOMMUNENAV == "Her\u00F8y"), ]
 print(intersect3)
 
-unique(intersect2$KOMMUNENAV)
-unique(intersect2$genus)
+#unique(intersect3$KOMMUNENAV)
+#unique(intersect3$genus)
 
 # map_occ_joined_clip2 extends beyond shp2
 ggplot() +
@@ -163,7 +174,7 @@ centroid_data1 <- st_centroid(shp2_troms)
 centroid_data1 <- cbind(centroid_data1, st_coordinates(centroid_data1))
 
 # Plotting code with labels
-ggplot() +
+troms_map <- ggplot() +
   geom_sf(data = shp2_troms, color = "gold", size = 0.2, fill = NA) +
   geom_sf(data = intersect3_troms, aes(color = occurrences), size = 0.2, fill = NA) +
   geom_text(data = centroid_data1, aes(label = KOMMUNENAV, x = X, y = Y), size = 3, color = "black") +
@@ -180,7 +191,7 @@ centroid_data2 <- st_centroid(shp2_akershus)
 centroid_data2 <- cbind(centroid_data2, st_coordinates(centroid_data2))
 
 # Plotting code with labels
-ggplot() +
+akershus_map <- ggplot() +
   geom_sf(data = shp2_akershus, color = "gold", size = 0.2, fill = NA) +
   geom_sf(data = intersect3_akershus, aes(color = occurrences), size = 0.2, fill = NA) +
   geom_text(data = centroid_data2, aes(label = KOMMUNENAV, x = X, y = Y), size = 3, color = "black") +
@@ -197,7 +208,7 @@ centroid_data3 <- st_centroid(shp2_moere)
 centroid_data3 <- cbind(centroid_data3, st_coordinates(centroid_data3))
 
 # Plotting code with labels
-ggplot() +
+moere_map <- ggplot() +
   geom_sf(data = shp2_moere, color = "gold", size = 0.2, fill = NA) +
   geom_sf(data = intersect3_moere, aes(color = occurrences), size = 0.2, fill = NA) +
   geom_text(data = centroid_data3, aes(label = KOMMUNENAV, x = X, y = Y), size = 3, color = "black") +
@@ -214,7 +225,7 @@ centroid_data4 <- st_centroid(shp2_oestfold)
 centroid_data4 <- cbind(centroid_data4, st_coordinates(centroid_data4))
 
 # Plotting code with labels
-ggplot() +
+oestfold_map <- ggplot() +
   geom_sf(data = shp2_oestfold, color = "gold", size = 0.2, fill = NA) +
   geom_sf(data = intersect3_oestfold, aes(color = occurrences), size = 0.2, fill = NA) +
   geom_text(data = centroid_data4, aes(label = KOMMUNENAV, x = X, y = Y), size = 3, color = "black") +
@@ -231,7 +242,7 @@ centroid_data5 <- st_centroid(shp2_vestland)
 centroid_data5 <- cbind(centroid_data5, st_coordinates(centroid_data5))
 
 # Plotting code with labels
-ggplot() +
+vestland_map <- ggplot() +
   geom_sf(data = shp2_vestland, color = "gold", size = 0.2, fill = NA) +
   geom_sf(data = intersect3_vestland, aes(color = occurrences), size = 0.2, fill = NA) +
   geom_text(data = centroid_data5, aes(label = KOMMUNENAV, x = X, y = Y), size = 3, color = "black") +
@@ -247,7 +258,7 @@ centroid_data6 <- st_centroid(shp2_nordland)
 centroid_data6 <- cbind(centroid_data6, st_coordinates(centroid_data6))
 
 # Plotting code with labels
-ggplot() +
+nordland_map <- ggplot() +
   geom_sf(data = shp2_nordland, color = "gold", size = 0.2, fill = NA) +
   geom_sf(data = intersect3_nordland, aes(color = occurrences), size = 0.2, fill = NA) +
   geom_text(data = centroid_data6, aes(label = KOMMUNENAV, x = X, y = Y), size = 3, color = "black") +
@@ -264,7 +275,7 @@ centroid_data7 <- st_centroid(shp2_rogaland)
 centroid_data7 <- cbind(centroid_data7, st_coordinates(centroid_data7))
 
 # Plotting code with labels
-ggplot() +
+rogaland_map <- ggplot() +
   geom_sf(data = shp2_rogaland, color = "gold", size = 0.2, fill = NA) +
   geom_sf(data = intersect3_rogaland, aes(color = occurrences), size = 0.2, fill = NA) +
   geom_text(data = centroid_data7, aes(label = KOMMUNENAV, x = X, y = Y), size = 3, color = "black") +
@@ -281,7 +292,7 @@ centroid_data8 <- st_centroid(shp2_troendelag)
 centroid_data8 <- cbind(centroid_data8, st_coordinates(centroid_data8))
 
 # Plotting code with labels
-ggplot() +
+troendelag_map <- ggplot() +
   geom_sf(data = shp2_troendelag, color = "gold", size = 0.2, fill = NA) +
   geom_sf(data = intersect3_troendelag, aes(color = occurrences), size = 0.2, fill = NA) +
   geom_text(data = centroid_data8, aes(label = KOMMUNENAV, x = X, y = Y), size = 3, color = "black") +
@@ -298,7 +309,7 @@ centroid_data9 <- st_centroid(shp2_finnmark)
 centroid_data9 <- cbind(centroid_data9, st_coordinates(centroid_data9))
 
 # Plotting code with labels
-ggplot() +
+finnmark_map <- ggplot() +
   geom_sf(data = shp2_finnmark, color = "gold", size = 0.2, fill = NA) +
   geom_sf(data = intersect3_finnmark, aes(color = occurrences), size = 0.2, fill = NA) +
   geom_text(data = centroid_data9, aes(label = KOMMUNENAV, x = X, y = Y), size = 3, color = "black") +
@@ -315,7 +326,7 @@ centroid_data10 <- st_centroid(shp2_agder)
 centroid_data10 <- cbind(centroid_data10, st_coordinates(centroid_data10))
 
 # Plotting code with labels
-ggplot() +
+agder_map <- ggplot() +
   geom_sf(data = shp2_agder, color = "gold", size = 0.2, fill = NA) +
   geom_sf(data = intersect3_agder, aes(color = occurrences), size = 0.2, fill = NA) +
   geom_text(data = centroid_data10, aes(label = KOMMUNENAV, x = X, y = Y), size = 3, color = "black") +
@@ -332,7 +343,7 @@ centroid_data11 <- st_centroid(shp2_telemark)
 centroid_data11 <- cbind(centroid_data11, st_coordinates(centroid_data11))
 
 # Plotting code with labels
-ggplot() +
+telemark_map <- ggplot() +
   geom_sf(data = shp2_telemark, color = "gold", size = 0.2, fill = NA) +
   geom_sf(data = intersect3_telemark, aes(color = occurrences), size = 0.2, fill = NA) +
   geom_text(data = centroid_data11, aes(label = KOMMUNENAV, x = X, y = Y), size = 3, color = "black") +
@@ -349,7 +360,7 @@ centroid_data12 <- st_centroid(shp2_vestfold)
 centroid_data12 <- cbind(centroid_data12, st_coordinates(centroid_data12))
 
 # Plotting code with labels
-ggplot() +
+vestfold_map <- ggplot() +
   geom_sf(data = shp2_vestfold, color = "gold", size = 0.2, fill = NA) +
   geom_sf(data = intersect3_vestfold, aes(color = occurrences), size = 0.2, fill = NA) +
   geom_text(data = centroid_data12, aes(label = KOMMUNENAV, x = X, y = Y), size = 3, color = "black") +
@@ -366,7 +377,7 @@ centroid_data13 <- st_centroid(shp2_buskerud)
 centroid_data13 <- cbind(centroid_data13, st_coordinates(centroid_data13))
 
 # Plotting code with labels
-ggplot() +
+buskerud_map <- ggplot() +
   geom_sf(data = shp2_buskerud, color = "gold", size = 0.2, fill = NA) +
   geom_sf(data = intersect3_buskerud, aes(color = occurrences), size = 0.2, fill = NA) +
   geom_text(data = centroid_data13, aes(label = KOMMUNENAV, x = X, y = Y), size = 3, color = "black") +
@@ -386,13 +397,20 @@ centroid_data14 <- st_centroid(shp2_oslo)
 centroid_data14 <- cbind(centroid_data14, st_coordinates(centroid_data14))
 
 # Plotting code with labels
-ggplot() +
+oslo_map <- ggplot() +
   geom_sf(data = shp2_oslo, color = "gold", size = 0.2, fill = NA) +
   geom_sf(data = intersect3_oslo, aes(color = occurrences), size = 0.2, fill = NA) +
   geom_text(data = centroid_data14, aes(label = KOMMUNENAV, x = X, y = Y), size = 3, color = "black") +
   theme_bw()
 
 ############################ STATISTICS #######################################################
+install.packages("patchwork")
+library("patchwork")
+
+# Arrange plots in two rows and two columns
+all_fylker_map <- finnmark_map + troms_map / nordland_map + troendelag_map / moere_map + vestland_map / rogaland_map + agder_map / telemark_map + buskerud_map / vestfold_map + akershus_map / oslo_map + oestfold_map
+print(all_fylker_map)
+
 # Count the number of occurrences of each species within each county
 group_sum <- map_occ_joined_clip1 %>%
   group_by(FYLKESNAVN, KOMMUNENAV, genus, aphiaID) %>%
@@ -464,18 +482,18 @@ summary_table <- data.frame(
   ratios = ratios,
   size_ratios = size_ratios
 )
-
 print(summary_table)
+
+
 sum(map_occ_joined_clip2$occurrences) #910 008 
 sum(intersect2$occurrences) #405 593
 sum(intersect3$occurrences)
 sum(group_sum$occurrences) #910 008
 sum(summary_table$Total_Occurrences) #23 793
 
+
 #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%5
 # WORMS
-install.packages("worrms")
-citation(package = 'worrms')
 library(worrms)
 
 aphiaIDs <- unique(group_sum$aphiaID)
@@ -484,4 +502,6 @@ print(aphiaIDs)
 # plural version, via id or name
 wm_class <- wm_classification_(id = c(aphiaIDs))
 wm_distrib <- wm_distribution_(id = c(aphiaIDs)) #got a bunch of warnings that there is no content
+
+
 #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
