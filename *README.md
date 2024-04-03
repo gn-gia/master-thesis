@@ -13,6 +13,7 @@ ArcGIS Pro 3.2 (3.2.49743) and R version 4.3.3 (Angel Food Cake) are used.
   - https://www.geonorge.no/
   - https://www.rdocumentation.org/
   - https://livingatlas.arcgis.com/en/home/
+  - https://www.marinespecies.org/ (WoRMS)
   - https://r.geocompx.org/reproj-geo-data.html#reproj-geo-data
   - https://jsta.github.io/glatos-spatial_workshop_materials/01-vector-open-shapefile-in-r/
   - https://www.marineregions.org/downloads.php
