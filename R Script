@@ -1,6 +1,5 @@
 # setwd("C:/Users/gngia/OneDrive/Documents/new obis")
 
-
 install.pacakges("dplyr")
 install.pacakges("robis")
 install.pacakges("ggplot2")
@@ -8,11 +7,11 @@ install.pacakges("sf")
 install.pacakges("worrms")
 install.pacakges("patchwork")
 
+# Pacakge citations
 citation(package = 'worrms')
 
 
-# Run with 179=Norway and polygon excludes Svalbard and some outer marine records/areas (records from 23.02.2024)
-#CHECK IF MOF IS EVEN RUNNING 
+# Occurrence Data: WKT string delimits polygon excluding Svalbard and Jan Mayen; Norway = 179 (Accessed 23.02.2024)
 library("dplyr")
 library("ggplot2")
 library("robis")
@@ -22,105 +21,81 @@ o <- occurrence(areaid = "179", mof = TRUE, geometry = "POLYGON ((34.4004 70.253
            3.5332 61.9968, 3.5332 58.3279, 7.2598 57.2790, 11.0567 58.4017, 12.4629 59.0948, 11.3379 60.6473,
            8.6660 60.5783, 8.3145 62.2924, 16.3301 65.6220, 17.2442 67.6293, 20.1973 68.7523,
            23.9238 69.6998, 26.5254 70.1344, 29.5488 69.5284, 32.2910 69.4051, 34.4004 70.2535))")
+
 unique(o$kingdom)
-#View(o)
 
 # Filter rows based on the specified conditions
 filtered_data <- o %>%
   filter(kingdom %in% c("Animalia", "Plantae", "Chromista", NA))
-#unique(filtered_data$kingdom)
 View(filtered_data)
 
-# Plot map
+# Plot filtered data
 library("dplyr")
 library("robis")
 library("maps")
-#library("ggplot2")
+library("ggplot2")
 map_ggplot(filtered_data, color = "blue")
 
-
-#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-  
-# Transform to an sf object and set crs
+# Transform to sf object and set crs (EPSG:4326, WGS84)
 library("sf")
 occ_sf <- st_as_sf(filtered_data, coords = c("decimalLongitude", "decimalLatitude"))
 occ_sf <- st_set_crs(occ_sf, "EPSG:4326")
 print(occ_sf1 <- st_crs(occ_sf))
-
-
-# Read the shapefile into an sf object
-library(sf)
-shp <- st_read("C:/Users/gngia/OneDrive/Documents/new obis/GIS/Kommuner_Fylker_Intersect.shp", stringsAsFactors=FALSE)
-#View(shp)
-shp <- st_transform(shp, crs = "EPSG:4326")
-print(shp1 <- st_crs(shp))
-
-class(shp)
 class(occ_sf)
 
-#idk if it works for graphs, but i might also have to run maps back to back to back to have them show all at once
-#par(mfrow=c(2,2))
+# Read the shapefile into an sf object and set crs (EPSG:4326, WGS84)
+library(sf)
+shp <- st_read("C:/Users/gngia/OneDrive/Documents/new obis/GIS/Kommuner_Fylker_Intersect.shp", stringsAsFactors=FALSE)
+shp <- st_transform(shp, crs = "EPSG:4326")
+print(shp1 <- st_crs(shp))
+View(shp)
+class(shp)
 
-# Plot the shapefile and occurrence data
+# Plot shapefile with occurrence data
 library(sf)
 library(ggplot2)
 ggplot() +
   geom_sf(data = shp) +
   geom_sf(data = occ_sf, color = "green", size = 1) +
   theme_bw()
-
-unique(filtered_data$country)
-
-# Plot the shapefile2 and occurrence data
-library(sf)
-library(ggplot2)
-ggplot() +
-  geom_sf(data = shp) +
-  geom_sf(data = occ_sf, color = "green", size = 1) +
-  theme_bw()
-
-#unique(filtered_data$country)
 
 # Perform a spatial join
 library(sf)
 map_occ_joined <- st_join(occ_sf, shp)
 class(map_occ_joined)
 
-#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-# Clipped shapefile with county, municipality, and clipped to be only territorial waters and change crs
+# Read the shapefile into an sf object and set crs (EPSG:4326, WGS84)
+# Shapefile clip with county, municipality, and is only territorial waters
 library("ggplot2")
 library(sf)
 shp2 <- st_read("C:/Users/gngia/OneDrive/Documents/new obis/GIS/Kommuner_Fylker_TerrVann_Clip.shp", stringsAsFactors=FALSE)
 shp2 <- st_transform(shp2, crs = "EPSG:4326")
 print(shp3 <- st_crs(shp2))
 class(shp2)
-plot(shp2)
 
-#Plot with occ_sf
+# Plot shapefile2 with occurrence data
 ggplot() +
   geom_sf(data = shp2) +
   geom_sf(data = occ_sf, color = "pink", size = 1) +
   theme_bw()
+
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 # Perform a spatial join
 library(sf)
 map_occ_joined_clip1 <- st_join(occ_sf, shp2)
 class(map_occ_joined_clip1)
 
-
+# Count the number of occurrences of each species within each county
 map_occ__with_clip1 <- map_occ_joined_clip1 %>%
   group_by(FYLKESNAVN) %>%
   summarize(species_count = n_distinct(originalScientificName)) #I dont understand why this does show species_count in the table / how map_occ_joined_clip2 has occurrences
 View(map_occ_joined_clip1)
 
-# Count the number of occurrences of each species within each county
  map_occ_joined_clip2 <- map_occ_joined_clip1 %>%
   group_by(FYLKESNAVN, KOMMUNENAV, genus, aphiaID) %>%
   summarize(occurrences = n())
 View(map_occ_joined_clip2)
-
-unique(map_occ_joined_clip2$KOMMUNENAV)
 
 # Plot the join
 library(sf)
@@ -129,9 +104,9 @@ ggplot() +
   geom_sf(data = shp) +
   geom_sf(data = shp2) +
   geom_sf(data = map_occ_joined_clip2, aes(color = occurrences), size = 0.25) +
-  theme_classic()
+  theme_bw() #map_occ_joined_clip2 extends beyond shp2
 
-#Intersect joined data with shp2
+#Intersect joined data with shp2 (leaves only occurrences within 12nm of the coast)
 intersect2 <- st_intersection(map_occ_joined_clip1, shp2)
 View(intersect2)
 
@@ -139,27 +114,16 @@ View(intersect2)
 intersect3 <- intersect2[!(intersect2$KOMMUNENAV == "Her\u00F8y"), ]
 print(intersect3)
 
-#unique(intersect3$KOMMUNENAV)
-#unique(intersect3$genus)
-
-# map_occ_joined_clip2 extends beyond shp2
-ggplot() +
-  geom_sf(data = shp) +
-  geom_sf(data = shp2, color = "gold", size = 0.2, fill = NA) +
-  geom_sf(data = map_occ_joined_clip2, aes(color = occurrences), size = 0.2)+
-  theme_bw()
-
-# intersect2 fits within shp2, intersect 3 excludes Herøy
+# Plot the intersection 
 ggplot() +
   geom_sf(data = shp) +
   geom_sf(data = shp2, color = "gold", size = 0.2, fill = NA) +
   geom_sf(data = intersect3, aes(color = occurrences), size = 0.2)+
-  theme_bw()
+  theme_bw() #intersect2 fits within shp2, intersect 3 excludes Herøy
 
-#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-Encoding("")
-options(encoding = "UTF-8")
-# https://symbl.cc/en/unicode-table/#latin-1-supplement
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+# Unicode <- https://symbl.cc/en/unicode-table/#latin-1-supplement
 
 unique(intersect3$FYLKESNAVN)
 
@@ -173,7 +137,7 @@ intersect3_troms <- intersect3 %>%
 centroid_data1 <- st_centroid(shp2_troms)
 centroid_data1 <- cbind(centroid_data1, st_coordinates(centroid_data1))
 
-# Plotting code with labels
+# Plot with labels
 troms_map <- ggplot() +
   geom_sf(data = shp2_troms, color = "gold", size = 0.2, fill = NA) +
   geom_sf(data = intersect3_troms, aes(color = occurrences), size = 0.2, fill = NA) +
@@ -190,7 +154,7 @@ intersect3_akershus <- intersect3 %>%
 centroid_data2 <- st_centroid(shp2_akershus)
 centroid_data2 <- cbind(centroid_data2, st_coordinates(centroid_data2))
 
-# Plotting code with labels
+# Plot with labels
 akershus_map <- ggplot() +
   geom_sf(data = shp2_akershus, color = "gold", size = 0.2, fill = NA) +
   geom_sf(data = intersect3_akershus, aes(color = occurrences), size = 0.2, fill = NA) +
@@ -207,7 +171,7 @@ intersect3_moere <- intersect3 %>%
 centroid_data3 <- st_centroid(shp2_moere)
 centroid_data3 <- cbind(centroid_data3, st_coordinates(centroid_data3))
 
-# Plotting code with labels
+# Plot with labels
 moere_map <- ggplot() +
   geom_sf(data = shp2_moere, color = "gold", size = 0.2, fill = NA) +
   geom_sf(data = intersect3_moere, aes(color = occurrences), size = 0.2, fill = NA) +
@@ -224,7 +188,7 @@ intersect3_oestfold <- intersect3 %>%
 centroid_data4 <- st_centroid(shp2_oestfold)
 centroid_data4 <- cbind(centroid_data4, st_coordinates(centroid_data4))
 
-# Plotting code with labels
+# Plot with labels
 oestfold_map <- ggplot() +
   geom_sf(data = shp2_oestfold, color = "gold", size = 0.2, fill = NA) +
   geom_sf(data = intersect3_oestfold, aes(color = occurrences), size = 0.2, fill = NA) +
@@ -241,7 +205,7 @@ intersect3_vestland <- intersect3 %>%
 centroid_data5 <- st_centroid(shp2_vestland)
 centroid_data5 <- cbind(centroid_data5, st_coordinates(centroid_data5))
 
-# Plotting code with labels
+# Plot with labels
 vestland_map <- ggplot() +
   geom_sf(data = shp2_vestland, color = "gold", size = 0.2, fill = NA) +
   geom_sf(data = intersect3_vestland, aes(color = occurrences), size = 0.2, fill = NA) +
@@ -257,7 +221,7 @@ intersect3_nordland <- intersect3 %>% filter(FYLKESNAVN == "\"Nordland - Nordl\u
 centroid_data6 <- st_centroid(shp2_nordland)
 centroid_data6 <- cbind(centroid_data6, st_coordinates(centroid_data6))
 
-# Plotting code with labels
+# Plot with labels
 nordland_map <- ggplot() +
   geom_sf(data = shp2_nordland, color = "gold", size = 0.2, fill = NA) +
   geom_sf(data = intersect3_nordland, aes(color = occurrences), size = 0.2, fill = NA) +
@@ -274,7 +238,7 @@ intersect3_rogaland <- intersect3 %>%
 centroid_data7 <- st_centroid(shp2_rogaland)
 centroid_data7 <- cbind(centroid_data7, st_coordinates(centroid_data7))
 
-# Plotting code with labels
+# Plot with labels
 rogaland_map <- ggplot() +
   geom_sf(data = shp2_rogaland, color = "gold", size = 0.2, fill = NA) +
   geom_sf(data = intersect3_rogaland, aes(color = occurrences), size = 0.2, fill = NA) +
@@ -291,7 +255,7 @@ intersect3_troendelag <- intersect3 %>%
 centroid_data8 <- st_centroid(shp2_troendelag)
 centroid_data8 <- cbind(centroid_data8, st_coordinates(centroid_data8))
 
-# Plotting code with labels
+# Plot with labels
 troendelag_map <- ggplot() +
   geom_sf(data = shp2_troendelag, color = "gold", size = 0.2, fill = NA) +
   geom_sf(data = intersect3_troendelag, aes(color = occurrences), size = 0.2, fill = NA) +
@@ -308,7 +272,7 @@ intersect3_finnmark <- intersect3 %>%
 centroid_data9 <- st_centroid(shp2_finnmark)
 centroid_data9 <- cbind(centroid_data9, st_coordinates(centroid_data9))
 
-# Plotting code with labels
+# Plot with labels
 finnmark_map <- ggplot() +
   geom_sf(data = shp2_finnmark, color = "gold", size = 0.2, fill = NA) +
   geom_sf(data = intersect3_finnmark, aes(color = occurrences), size = 0.2, fill = NA) +
@@ -325,7 +289,7 @@ intersect3_agder <- intersect3 %>%
 centroid_data10 <- st_centroid(shp2_agder)
 centroid_data10 <- cbind(centroid_data10, st_coordinates(centroid_data10))
 
-# Plotting code with labels
+# Plot with labels
 agder_map <- ggplot() +
   geom_sf(data = shp2_agder, color = "gold", size = 0.2, fill = NA) +
   geom_sf(data = intersect3_agder, aes(color = occurrences), size = 0.2, fill = NA) +
@@ -342,7 +306,7 @@ intersect3_telemark <- intersect3 %>%
 centroid_data11 <- st_centroid(shp2_telemark)
 centroid_data11 <- cbind(centroid_data11, st_coordinates(centroid_data11))
 
-# Plotting code with labels
+# Plot with labels
 telemark_map <- ggplot() +
   geom_sf(data = shp2_telemark, color = "gold", size = 0.2, fill = NA) +
   geom_sf(data = intersect3_telemark, aes(color = occurrences), size = 0.2, fill = NA) +
@@ -359,7 +323,7 @@ intersect3_vestfold <- intersect3 %>%
 centroid_data12 <- st_centroid(shp2_vestfold)
 centroid_data12 <- cbind(centroid_data12, st_coordinates(centroid_data12))
 
-# Plotting code with labels
+# Plot with labels
 vestfold_map <- ggplot() +
   geom_sf(data = shp2_vestfold, color = "gold", size = 0.2, fill = NA) +
   geom_sf(data = intersect3_vestfold, aes(color = occurrences), size = 0.2, fill = NA) +
@@ -376,7 +340,7 @@ intersect3_buskerud <- intersect3 %>%
 centroid_data13 <- st_centroid(shp2_buskerud)
 centroid_data13 <- cbind(centroid_data13, st_coordinates(centroid_data13))
 
-# Plotting code with labels
+# Plot with labels
 buskerud_map <- ggplot() +
   geom_sf(data = shp2_buskerud, color = "gold", size = 0.2, fill = NA) +
   geom_sf(data = intersect3_buskerud, aes(color = occurrences), size = 0.2, fill = NA) +
@@ -389,22 +353,18 @@ shp2_oslo <- shp2[shp2$FYLKESNAVN == "Oslo", ]
 intersect3_oslo <- intersect3 %>%
   filter(FYLKESNAVN == "Oslo",)
 
-#print(intersect3_oslo)
-#sum(intersect3_oslo$occurrences)
-
 # Extract x and y coordinates from geometry column
 centroid_data14 <- st_centroid(shp2_oslo)
 centroid_data14 <- cbind(centroid_data14, st_coordinates(centroid_data14))
 
-# Plotting code with labels
+# Plot with labels
 oslo_map <- ggplot() +
   geom_sf(data = shp2_oslo, color = "gold", size = 0.2, fill = NA) +
   geom_sf(data = intersect3_oslo, aes(color = occurrences), size = 0.2, fill = NA) +
   geom_text(data = centroid_data14, aes(label = KOMMUNENAV, x = X, y = Y), size = 3, color = "black") +
   theme_bw()
 
-############################ STATISTICS #######################################################
-install.packages("patchwork")
+################################### STATISTICS #######################################################
 library("patchwork")
 
 # Arrange plots in two rows and two columns
@@ -416,6 +376,21 @@ group_sum <- map_occ_joined_clip1 %>%
   group_by(FYLKESNAVN, KOMMUNENAV, genus, aphiaID) %>%
   summarize(occurrences = n())
 View(group_sum)
+
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+# WORMS
+library(worrms)
+
+aphiaIDs <- unique(group_sum$aphiaID)
+print(aphiaIDs)
+
+# plural version = _
+wm_classification_(id = c(aphiaIDs))
+wm_id2name_(id, ...)
+wm_synonyms_(id = c(aphiaIDs))
+wm_distrib <- wm_distribution_(id = c(aphiaIDs)) #got a bunch of warnings that there is no content
+
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 # % of occurrences for each county compared to sum of total occurrences
 ratios <- c(
@@ -436,14 +411,13 @@ ratios <- c(
   )
 print(ratios)
 
-# KOMMUNENAV is connected with Shape Area
-# how to get relative shape area comparisons so that the percentage of occ data can be compared to size
+# Relative shape area comparisons so that the percentage of occ data can be compared to size
 areas <- intersect3 %>%
-  group_by(Shape_Area, KOMMUNENAV, FYLKESNAVN) %>%
+  group_by(Shape_Area, KOMMUNENAV, FYLKESNAVN) %>% #Shape Areas are connected with KOMMUNENAV
   summarize(occurrences = n())
 View(areas)
 
-#SUM ALL KOMMUNENAVN AND SHAPE AREAS TO EACH COUNTY BASED ON areas
+# Sum all municipalities and municipality shape areas to each county based on "areas"
 sum_areas <- areas %>%
   group_by(FYLKESNAVN) %>%
   summarize(
@@ -452,6 +426,7 @@ sum_areas <- areas %>%
   )
 print(sum_areas)
 
+# Summ all municipality water areas to create total area of water
 total_area <- sum(sum_areas$Total_Shape_Area)
 print(total_area)
 
@@ -474,7 +449,7 @@ size_ratios <- c(
 )                 
 print(size_ratios)
 
-
+# Create a summary table 
 summary_table <- data.frame(
   FYLKESNAVN = sum_areas$FYLKESNAVN,
   Total_Shape_Area = sum_areas$Total_Shape_Area,
@@ -484,24 +459,26 @@ summary_table <- data.frame(
 )
 print(summary_table)
 
-
+# Check I have not lost any occurrences along the way I want to keep
 sum(map_occ_joined_clip2$occurrences) #910 008 
 sum(intersect2$occurrences) #405 593
 sum(intersect3$occurrences)
 sum(group_sum$occurrences) #910 008
 sum(summary_table$Total_Occurrences) #23 793
 
-
-#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%5
-# WORMS
-library(worrms)
-
-aphiaIDs <- unique(group_sum$aphiaID)
-print(aphiaIDs)
-
-# plural version, via id or name
-wm_class <- wm_classification_(id = c(aphiaIDs))
-wm_distrib <- wm_distribution_(id = c(aphiaIDs)) #got a bunch of warnings that there is no content
-
-
 #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+# think about running profvis or tic toc
+
+library(profvis)
+
+profvis({
+  # Your R code here
+})
+
+library(tictoc)
+
+tic()  # Start timer
+
+# Your long-running code here
+
+toc()  # End timer and display elapsed time
