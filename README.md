@@ -21,7 +21,7 @@ ArcGIS Pro 3.2 (3.2.49743) and R version 4.3.3 (Angel Food Cake) are used.
   - https://manual.obis.org/common_formatissues.html#spatial
   - https://kartkatalog.geonorge.no/metadata/sjoekart-maritim-infrastruktur/a894ea02-d2dc-4550-ac3e-49230ceed42a
   - https://kartkatalog.geonorge.no/metadata/norways-maritime-boundaries/e106adf4-c9d8-4fce-a9b5-7886a4126d23
-  - https://github.com/iobis/robis/blob/master/vignettes/getting-started.Rmd
+  - https://github.com/iobis/robis/blob/master/vignettes/getting-started.Rmd (@pieterprovoost)
    
 Author: G. Giannone
 MSc Biology, Norwegian University of Science and Technology - Trondheim, Norway
