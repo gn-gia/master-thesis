@@ -23,7 +23,6 @@ ArcGIS Pro 3.2 (3.2.49743) and R version 4.3.3 (Angel Food Cake) are used.
   - https://kartkatalog.geonorge.no/metadata/norways-maritime-boundaries/e106adf4-c9d8-4fce-a9b5-7886a4126d23
   - https://github.com/iobis/robis/blob/master/vignettes/getting-started.Rmd (@pieterprovoost)
    
-Author: G. Giannone
-MSc Biology, Norwegian University of Science and Technology - Trondheim, Norway
+Author: G. Giannone - MSc Biology, Norwegian University of Science and Technology - Trondheim, Norway
 
 License: MIT License, Copyright (c) 2024 gn-gia
