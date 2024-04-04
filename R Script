@@ -561,7 +561,7 @@ summary_table <- data.frame(
 )
 print(summary_table)
 
-######################### Check I have not lost any occurrences along the way ##################################
+######################### Checks & Notes ##################################
 sum(map_occ_joined_clip2$occurrences) #910 008 
 sum(intersect3$occurrences) #380 104  with 0 in class == Aves
 sum(areas$occurrences) #380 104
@@ -586,7 +586,6 @@ sum(
 
 sum(summary_table$Total_Occurrences.occurrences) #380 104
 
-
 ----------------------------------------------------------
 any(is.na(intersect3$FYLKESNAVN))
 any(is.na(intersect3$occurrences))
@@ -595,3 +594,11 @@ print(indices_with_na)
 
 length(sum_areas$FYLKESNAVN)
 length(by_county_occ_sum)
+
+
+
+#notes from EOD 04.04.2024 
+#I downloaded a bunch of shp that need to be looked at in Pro
+#https://emodnet.ec.europa.eu/geoviewer/#
+#Seems like all birds were removed after the intersection(?) add them back and re sum everything. should be simple since
+#everything is currently summed correctly 
