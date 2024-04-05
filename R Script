@@ -90,7 +90,7 @@ map_occ__with_clip1 <- map_occ_joined_clip1 %>%
 View(map_occ_joined_clip1)
 
 map_occ_joined_clip2 <- map_occ_joined_clip1 %>%
-  group_by(FYLKESNAVN, KOMMUNENAV, aphiaID, Shape_Area) %>%
+  group_by(FYLKESNAVN, KOMMUNENAV, aphiaID, originalScientificName, family, class, phylum, kingdom, Shape_Area) %>%
   summarize(occurrences = n())
 View(map_occ_joined_clip2)
 
@@ -107,7 +107,7 @@ ggplot() +
 #Intersect joined data with shp2 (leaves only occurrences within 12nm of the coast)
 intersect3 <- st_intersection(map_occ_joined_clip2, shp2)
 View(intersect3)
-
+class(intersect3) # sf, tbl_df, tbl, data.frame
 
 # Plot the intersection 
 ggplot() +
@@ -451,26 +451,88 @@ all_county_maps <- all_county_maps +
 # Print the composite plot
 print(all_county_maps)
 
-#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% WoRMS
+library(worrms) # (https://www.marinespecies.org/)
 
-# WoRMS (https://www.marinespecies.org/)
-library(worrms)
+#synonyms <- wm_synonyms_(id = c(aphiaIDs)) # Synonyms, do any overlap with the scientific name given with AphiaID
+#print(synonyms)
 
+# Summarizing by classification
 aphiaIDs <- unique(intersect3$aphiaID)
 print(aphiaIDs)
-
-synonyms <- wm_synonyms_(id = c(aphiaIDs))
-print(synonyms)
 
 aphia_classification <- wm_classification_(id = c(aphiaIDs))
 print(aphia_classification)
 
-aves_taxa <- aphia_classification %>%
-  filter(rank == "Aves") %>%
+class_taxa <- aphia_classification %>%
+  filter(rank == "Class") %>%
+  group_by(scientificname, AphiaID) %>%
   summarize(occurrences = n())
-print(aves_taxa) #0
+print(class_taxa)
 
-#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+kingdom_taxa <- aphia_classification %>%
+  filter(rank == "Kingdom") %>%
+  group_by(scientificname, AphiaID) %>%
+  summarize(occurrences = n())
+print(kingdom_taxa)
+
+unique(intersect3$class)
+taxa_by_class <- intersect3 %>%
+  group_by(class) %>%
+  summarize(total_occurrences = sum(occurrences, na.rm = TRUE))
+print(taxa_by_class)
+
+# Calculate the ratio of each class versus the total sum of occurrences
+total_sum_by_class <- sum(taxa_by_class$total_occurrences) # Total sum of occurrences
+
+percentage_occ_per_class <- taxa_by_class %>%
+  mutate(percentage = sprintf("%.5f%%", (total_occurrences / total_sum_by_class) * 100))
+print(percentage_occ_per_class) # percentage column says what percent of the total is each class; overwhelming maj is Aves
+sum(percentage_occ_per_class$total_occurrences)
+
+#taxa_classification <- intersect3 %>%
+#  filter(rank %in% c("kingdom", "phylum", "class", "order", "family", "genus", "sp")) %>%
+#  group_by(rank, scientificname) %>%
+#  summarize(occurrences = sum(occurrences))
+#print(taxa_classification)
+
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% FIND NA VALUES
+
+# Print NA/missing information of intersect3
+indices_with_na <- which(colSums(is.na(intersect3)) > 0)
+print(indices_with_na) #family; class; phylum; kingdom; REF
+
+# Print the number of NA values in each column
+for (i in indices_with_na) {
+  cat("Column", i, "has", sum(is.na(intersect3[, i])), "NA values.\n")
+}
+
+#Column 5 has 1941 NA values. - Family
+#Column 6 has 644 NA values. - Class
+#Column 7 has 19 NA values. - Phylum
+#Column 8 has 1 NA values. - Kingdom
+#Column 21 has 18479 NA values. - Ref
+
+# Print NA/missing information of intersect3
+indices_with_na <- which(rowSums(is.na(intersect3)) > 0)
+print(indices_with_na)
+
+# Print the number of NA values in each row
+for (i in indices_with_na) {
+  cat("Row", i, "has", sum(is.na(intersect3[i, ])), "NA values.\n")
+}
+
+any(is.na(intersect3$originalScientificName)) # FALSE
+
+# Find NA values in intersect3
+# Remove rows with NA values
+intersect3_no_na <- intersect3[, !names(intersect3) %in% c("REF")]
+
+# Find rows with NA values by comparing row counts
+rows_with_na <- nrow(intersect3) - nrow(intersect3_no_na)
+print(rows_with_na)
+
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 # Count the number of occurrences of each species within each county
 #group_sum <- map_occ_joined_clip1 %>%
@@ -585,20 +647,25 @@ sum(
 ) #380 104
 
 sum(summary_table$Total_Occurrences.occurrences) #380 104
-
 ----------------------------------------------------------
 any(is.na(intersect3$FYLKESNAVN))
 any(is.na(intersect3$occurrences))
 indices_with_na <- which(colSums(is.na(intersect3)) > 0)
 print(indices_with_na)
 
+any(is.na(intersect3$aphiaID)) #False
+any(is.na(class_taxa$scientificname)) #False
+any(is.na(occ_sf$class)) # True
+any(is.na(occ_sf$phylum)) #True
+any(is.na(occ_sf$genus)) #True 
+any(is.na(map_occ_joined_clip1$originalScientificName))  #False
+
+any(is.na(intersect3$phylum))
+
 length(sum_areas$FYLKESNAVN)
 length(by_county_occ_sum)
 
 
-
-#notes from EOD 04.04.2024 
-#I downloaded a bunch of shp that need to be looked at in Pro
-#https://emodnet.ec.europa.eu/geoviewer/#
-#Seems like all birds were removed after the intersection(?) add them back and re sum everything. should be simple since
-#everything is currently summed correctly 
+# notes from EOD 05.04.2024 
+#find better habitat data and also look at the points data in Pro that i opened today. 
+#figure out how to scale the composite map better and also improve the aesthetics of it 
