@@ -438,18 +438,73 @@ all_county_maps <- (
 ) + plot_layout(ncol = 4, byrow = TRUE)  # Adjust the number of columns based on the total number of maps
 
 # Add titles for each county map and overarching title
+# Define the size of each map
+map_width <- 8
+map_height <- 8
+
+# Update the plot_annotation to set appropriate map sizes
 all_county_maps <- all_county_maps +
   plot_annotation(
     title = "Composite Map of Norwegian Counties",
-    subtitle = c("Finnmark", "Troms", "Nordland", "Trøndelag", "Møre og Romsdal", "Vestland", 
+    subtitle = c("Finnmark", "Troms", "Nordland", "Tr\u00F8ndelag", "M\u00F8re og Romsdal", "Vestland", 
                  "Rogaland", "Agder", "Telemark", "Buskerud", "Vestfold", "Akershus", 
                  "Oslo", "Østfold"),
     theme = theme(plot.title = element_text(size = 16), plot.subtitle = element_text(size = 10))
   ) +
-  theme(plot.margin = unit(c(1, 1, 1, 1), "cm"))  # Set appropriate size for the maps
+  theme(plot.margin = unit(c(2, 2, 2, 2), "cm"), 
+        aspect.ratio = map_height / map_width)  # Set aspect ratio
+print(all_county_maps)
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%5
+
+library(ggplot2)
+library(gridExtra)
+
+# Define the size of each map
+# Define the size of each map
+map_width <- 4
+map_height <- 4
+
+# List of all county names
+county_names <- c("Finnmark", "Troms", "Nordland", "Trøndelag", "Møre og Romsdal", "Vestland", 
+                  "Rogaland", "Agder", "Telemark", "Buskerud", "Vestfold", "Akershus", 
+                  "Oslo", "Østfold")
+
+# Define the layout for the composite plot
+layout_matrix <- matrix(1:length(county_names), nrow = 2, byrow = TRUE)
+
+# Generate individual map plots and store them in the list
+map_plots <- list()
+for (i in 1:length(county_names)) {
+  county_plot <- all_county_maps[[i]]  # Extract the individual ggplot plot from patchwork
+  
+  # Modify the individual plot as needed
+  county_plot <- county_plot +
+    theme(plot.title = element_text(size = 16, vjust = 2),  # Adjust vjust parameter to move the title upwards
+          plot.subtitle = element_text(size = 10),
+          plot.margin = unit(c(1, 1, 1.5, 1), "cm")) +  # Increase the top margin
+    theme_void() +
+    theme(aspect.ratio = map_height / map_width)  # Set fixed dimensions for each map
+  
+  map_plots[[i]] <- county_plot
+}
+
+# Combine individual map plots into a composite plot
+composite_plot <- NULL
+for (i in 1:length(county_names)) {
+  if (is.null(composite_plot)) {
+    composite_plot <- map_plots[[i]]
+  } else {
+    composite_plot <- composite_plot + map_plots[[i]]
+  }
+}
+
+# Add overall title and subtitle to the composite plot
+composite_plot <- composite_plot +
+  ggplot2::labs(title = "Composite Map of Norwegian Counties" +
+  theme(plot.title = element_text(hjust = 0.5)))  # Center the title
 
 # Print the composite plot
-print(all_county_maps)
+print(composite_plot)
 
 #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% WoRMS
 library(worrms) # (https://www.marinespecies.org/)
@@ -647,11 +702,13 @@ sum(
 ) #380 104
 
 sum(summary_table$Total_Occurrences.occurrences) #380 104
+
 ----------------------------------------------------------
 any(is.na(intersect3$FYLKESNAVN))
 any(is.na(intersect3$occurrences))
 indices_with_na <- which(colSums(is.na(intersect3)) > 0)
 print(indices_with_na)
+
 
 any(is.na(intersect3$aphiaID)) #False
 any(is.na(class_taxa$scientificname)) #False
@@ -662,10 +719,8 @@ any(is.na(map_occ_joined_clip1$originalScientificName))  #False
 
 any(is.na(intersect3$phylum))
 
+
+
 length(sum_areas$FYLKESNAVN)
 length(by_county_occ_sum)
 
-
-# notes from EOD 05.04.2024 
-#find better habitat data and also look at the points data in Pro that i opened today. 
-#figure out how to scale the composite map better and also improve the aesthetics of it 
