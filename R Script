@@ -5,12 +5,16 @@ install.pacakges("robis")
 install.pacakges("ggplot2")
 install.pacakges("sf")
 install.pacakges("worrms")
+install.packages("remotes")
+  remotes::install_github("IUCNN/IUCNN") # maybe not using this or rredlist
+install.packages("rredlist")
 install.pacakges("patchwork")
 install.packages("formattable")
+install.packages("kableExtra")
 
 # Pacakge citations
 citation(package = 'worrms')
-
+citation("IUCNN")
 
 # Occurrence Data: WKT string delimits polygon excluding Svalbard and Jan Mayen; Norway = 179 (Accessed 23.02.2024)
 library("dplyr")
@@ -110,14 +114,20 @@ View(intersect3)
 class(intersect3) # sf, tbl_df, tbl, data.frame
 
 # Plot the intersection 
-ggplot() +
+intersect3_plot <- ggplot() +
   geom_sf(data = shp) +
   geom_sf(data = shp2, color = "gold", size = 0.2, fill = NA) +
-  geom_sf(data = intersect3, aes(color = occurrences), size = 0.2)+
-  theme_bw() #intersect2 fits within shp2, intersect 3 excludes Herøy
+  geom_sf(data = intersect3, aes(color = occurrences), size = 0.75, fill = NA) +
+  scale_fill_gradient(low = "green", high = "red") +
+  scale_color_gradient(low = "green", high = "red") +
+  geom_text(data = centroid_data3, aes(label = KOMMUNENAV, x = X, y = Y), size = 3, color = "black") + #trying to figure out why some of the locations of high density aren't showing up
+  theme_bw()
+
+print(intersect3_plot)
 
 # Unicode <- https://symbl.cc/en/unicode-table/#latin-1-supplement
 unique(intersect3$FYLKESNAVN)
+#st_centroid returns the geometric center for a geometry
 
 ####################### TROMS #######################################
 # Filter shp2 to include only the geometry for the county of interest
@@ -137,7 +147,12 @@ troms_map <-ggplot() +
   scale_color_gradient(low = "green", high = "red") +  # Adding color scale for points
   ggtitle("Troms") +
   geom_text(data = centroid_data1, aes(label = KOMMUNENAV, x = X, y = Y), size = 3, color = "black") +
-  theme_bw()
+  theme_bw() +
+  theme(axis.title.x = element_blank(),  # Remove x-axis title
+        axis.title.y = element_blank(),  # Remove y-axis title
+        plot.title.position = "plot",  # Position the title centered above the plot
+        plot.title = element_text(hjust = 0.5))  # Center the title text
+
 print(troms_map)
 
 ####################### AKERSHUS #######################################
@@ -158,7 +173,12 @@ akershus_map <- ggplot() +
   scale_color_gradient(low = "green", high = "red") +  # Adding color scale for points
   ggtitle("Akershus") +
   geom_text(data = centroid_data2, aes(label = KOMMUNENAV, x = X, y = Y), size = 3, color = "black") +
-  theme_bw()
+  theme_bw() +
+  theme(axis.title.x = element_blank(),  # Remove x-axis title
+        axis.title.y = element_blank(),  # Remove y-axis title
+        plot.title.position = "plot",  # Position the title centered above the plot
+        plot.title = element_text(hjust = 0.5))  # Center the title text
+
 print(akershus_map)
 
 ####################### MØRE OG ROMSDAL #######################################
@@ -174,12 +194,17 @@ centroid_data3 <- cbind(centroid_data3, st_coordinates(centroid_data3))
 # Plot with labels
 moere_map <- ggplot() +
   geom_sf(data = shp2_moere, color = "gold", size = 0.2, fill = NA) +
-  geom_sf(data = intersect3_moere, aes(color = occurrences), size = 0.75, fill = NA) +
+  geom_sf(data = intersect3_moere, aes(color = occurrences), size = 5, fill = NA) +
   scale_fill_gradient(low = "green", high = "red") +
   scale_color_gradient(low = "green", high = "red") +  # Adding color scale for points
   ggtitle("M\u00F8re og Romsdal") +
   geom_text(data = centroid_data3, aes(label = KOMMUNENAV, x = X, y = Y), size = 3, color = "black") +
-  theme_bw()
+  theme_bw()+
+  theme(axis.title.x = element_blank(),  # Remove x-axis title
+        axis.title.y = element_blank(),  # Remove y-axis title
+        plot.title.position = "plot",  # Position the title centered above the plot
+        plot.title = element_text(hjust = 0.5))  # Center the title text
+
 print(moere_map)
 
 ####################### ØSTFOLD #######################################
@@ -192,15 +217,19 @@ intersect3_oestfold <- intersect3 %>%
 centroid_data4 <- st_centroid(shp2_oestfold)
 centroid_data4 <- cbind(centroid_data4, st_coordinates(centroid_data4))
 
-# Plot with labels
 oestfold_map <- ggplot() +
   geom_sf(data = shp2_oestfold, color = "gold", size = 0.2, fill = NA) +
   geom_sf(data = intersect3_oestfold, aes(color = occurrences), size = 0.75, fill = NA) +
   scale_fill_gradient(low = "green", high = "red") +
-  scale_color_gradient(low = "green", high = "red") +  # Adding color scale for points
+  scale_color_gradient(low = "green", high = "red") +
   ggtitle("\u00D8stfold") +
   geom_text(data = centroid_data4, aes(label = KOMMUNENAV, x = X, y = Y), size = 3, color = "black") +
-  theme_bw()
+  theme_bw() +
+  theme(axis.title.x = element_blank(),  # Remove x-axis title
+        axis.title.y = element_blank(),  # Remove y-axis title
+        plot.title.position = "plot",  # Position the title centered above the plot
+        plot.title = element_text(hjust = 0.5))  # Center the title text
+
 print(oestfold_map)
 
 ####################### VESTLAND #######################################
@@ -221,7 +250,12 @@ vestland_map <- ggplot() +
   scale_color_gradient(low = "green", high = "red") +  # Adding color scale for points
   ggtitle("Vestland") +
   geom_text(data = centroid_data5, aes(label = KOMMUNENAV, x = X, y = Y), size = 3, color = "black") +
-  theme_bw()
+  theme_bw() +
+  theme(axis.title.x = element_blank(),  # Remove x-axis title
+        axis.title.y = element_blank(),  # Remove y-axis title
+        plot.title.position = "plot",  # Position the title centered above the plot
+        plot.title = element_text(hjust = 0.5))  # Center the title text
+
 print(vestland_map)
 
 ####################### NORDLAND #######################################
@@ -241,7 +275,12 @@ nordland_map <- ggplot() +
   scale_color_gradient(low = "green", high = "red") +  # Adding color scale for points
   ggtitle("Nordland") +
   geom_text(data = centroid_data6, aes(label = KOMMUNENAV, x = X, y = Y), size = 3, color = "black") +
-  theme_bw()
+  theme_bw() +
+  theme(axis.title.x = element_blank(),  # Remove x-axis title
+        axis.title.y = element_blank(),  # Remove y-axis title
+        plot.title.position = "plot",  # Position the title centered above the plot
+        plot.title = element_text(hjust = 0.5))  # Center the title text
+
 print(nordland_map)
 
 ####################### ROGALAND #######################################
@@ -262,7 +301,12 @@ rogaland_map <- ggplot() +
   scale_color_gradient(low = "green", high = "red") +  # Adding color scale for points
   ggtitle("Rogaland") +
   geom_text(data = centroid_data7, aes(label = KOMMUNENAV, x = X, y = Y), size = 3, color = "black") +
-  theme_bw()
+  theme_bw() +
+  theme(axis.title.x = element_blank(),  # Remove x-axis title
+        axis.title.y = element_blank(),  # Remove y-axis title
+        plot.title.position = "plot",  # Position the title centered above the plot
+        plot.title = element_text(hjust = 0.5))  # Center the title text
+
 print(rogaland_map)
 
 ####################### TRØNDELAG #######################################
@@ -282,8 +326,13 @@ troendelag_map <- ggplot() +
   scale_fill_gradient(low = "green", high = "red") +
   scale_color_gradient(low = "green", high = "red") +  # Adding color scale for points
   ggtitle("Tr\u00F8ndelag") +
-  geom_text(data = centroid_data8, aes(label = KOMMUNENAV, x = X, y = Y), size = 3, color = "black") +
-  theme_bw()
+  geom_text(data = centroid_data8, aes(label = KOMMUNENAV, x = X, y = Y), size = 2.5, color = "black") +
+  theme_bw() +
+  theme(axis.title.x = element_blank(),  # Remove x-axis title
+        axis.title.y = element_blank(),  # Remove y-axis title
+        plot.title.position = "plot",  # Position the title centered above the plot
+        plot.title = element_text(hjust = 0.5))  # Center the title text
+
 print(troendelag_map)
 
 ####################### FINNMARK #######################################
@@ -304,7 +353,12 @@ finnmark_map <- ggplot() +
   scale_color_gradient(low = "green", high = "red") +  # Adding color scale for points
   ggtitle("Finnmark") +
   geom_text(data = centroid_data9, aes(label = KOMMUNENAV, x = X, y = Y), size = 3, color = "black") +
-  theme_bw()
+  theme_bw() +
+  theme(axis.title.x = element_blank(),  # Remove x-axis title
+        axis.title.y = element_blank(),  # Remove y-axis title
+        plot.title.position = "plot",  # Position the title centered above the plot
+        plot.title = element_text(hjust = 0.5))  # Center the title text
+
 print(finnmark_map)
 
 ####################### AGDER #######################################
@@ -325,7 +379,12 @@ agder_map <- ggplot() +
   scale_color_gradient(low = "green", high = "red") +  # Adding color scale for points
   ggtitle("Agder") +
   geom_text(data = centroid_data10, aes(label = KOMMUNENAV, x = X, y = Y), size = 3, color = "black") +
-  theme_bw()
+  theme_bw() +
+  theme(axis.title.x = element_blank(),  # Remove x-axis title
+        axis.title.y = element_blank(),  # Remove y-axis title
+        plot.title.position = "plot",  # Position the title centered above the plot
+        plot.title = element_text(hjust = 0.5))  # Center the title text
+
 print(agder_map)
 
 ####################### TELEMARK #######################################
@@ -346,7 +405,12 @@ telemark_map <- ggplot() +
   scale_color_gradient(low = "green", high = "red") +  # Adding color scale for points
   ggtitle("Telemark") +
   geom_text(data = centroid_data11, aes(label = KOMMUNENAV, x = X, y = Y), size = 3, color = "black") +
-  theme_bw()
+  theme_bw() +
+  theme(axis.title.x = element_blank(),  # Remove x-axis title
+        axis.title.y = element_blank(),  # Remove y-axis title
+        plot.title.position = "plot",  # Position the title centered above the plot
+        plot.title = element_text(hjust = 0.5))  # Center the title text
+
 print(telemark_map)
 
 ####################### VESTFOLD #######################################
@@ -367,7 +431,12 @@ vestfold_map <- ggplot() +
   scale_color_gradient(low = "green", high = "red") +  # Adding color scale for points
   ggtitle("Vestfold") +
   geom_text(data = centroid_data12, aes(label = KOMMUNENAV, x = X, y = Y), size = 3, color = "black") +
-  theme_bw()
+  theme_bw() +
+  theme(axis.title.x = element_blank(),  # Remove x-axis title
+        axis.title.y = element_blank(),  # Remove y-axis title
+        plot.title.position = "plot",  # Position the title centered above the plot
+        plot.title = element_text(hjust = 0.5))  # Center the title text
+
 print(vestfold_map)
 
 ####################### BUSKERUD #######################################
@@ -388,7 +457,12 @@ buskerud_map <- ggplot() +
   scale_color_gradient(low = "green", high = "red") +  # Adding color scale for points
   ggtitle("Buskerud") +
   geom_text(data = centroid_data13, aes(label = KOMMUNENAV, x = X, y = Y), size = 3, color = "black") +
-  theme_bw()
+  theme_bw() +
+  theme(axis.title.x = element_blank(),  # Remove x-axis title
+        axis.title.y = element_blank(),  # Remove y-axis title
+        plot.title.position = "plot",  # Position the title centered above the plot
+        plot.title = element_text(hjust = 0.5))  # Center the title text
+
 print(buskerud_map)
 
 ####################### OSLO #######################################
@@ -409,7 +483,12 @@ oslo_map <- ggplot() +
   scale_color_gradient(low = "green", high = "red") +  # Adding color scale for points
   ggtitle("Oslo") +
   geom_text(data = centroid_data14, aes(label = KOMMUNENAV, x = X, y = Y), size = 3, color = "black") +
-  theme_bw()
+  theme_bw() +
+  theme(axis.title.x = element_blank(),  # Remove x-axis title
+        axis.title.y = element_blank(),  # Remove y-axis title
+        plot.title.position = "plot",  # Position the title centered above the plot
+        plot.title = element_text(hjust = 0.5))  # Center the title text
+
 print(oslo_map)
 
 ################################### STATISTICS #######################################################
@@ -545,11 +624,21 @@ percentage_occ_per_class <- taxa_by_class %>%
 print(percentage_occ_per_class) # percentage column says what percent of the total is each class; overwhelming maj is Aves
 sum(percentage_occ_per_class$total_occurrences)
 
+# Returns the data into a format for latex, using kableExtra
+library(kableExtra)
+kable(percentage_occ_per_class, "latex", file = "Percentage_occ_per_class.tex")
+
+
 #taxa_classification <- intersect3 %>%
 #  filter(rank %in% c("kingdom", "phylum", "class", "order", "family", "genus", "sp")) %>%
 #  group_by(rank, scientificname) %>%
 #  summarize(occurrences = sum(occurrences))
 #print(taxa_classification)
+
+#WHAT I WANT TO DO IS RUN THE APHIAID FOR SPECIES NAMES AND THEN RUN THAT LIST USING THE IUCN PACAKGE AGAINST THE IUCN RED LIST DATA TO FIND ANY ENDANGERED SPECIES
+aphia_names <- wm_id2name_(aphiaIDs)
+print(aphia_names)
+library(rredlist) #I need to generate a token to use the IUCN API but the website is giving a 404 error, I emailed them about it 16.04.2024
 
 #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% FIND NA VALUES
 
@@ -655,7 +744,7 @@ size_ratios <- c(
 )                 
 print(size_ratios)
 
-library(formattable)
+# library(formattable)
 
 # Format the ratios as percentages
 occurrence_percentage <- percent(occurence_ratios, 2)
@@ -677,6 +766,10 @@ summary_table <- data.frame(
   occurrence_percentage = occurrence_percentage # Include the occurrence percentage directly
 )
 print(summary_table)
+
+# Returns the data into a format for latex, using kableExtra
+library(kableExtra)
+kable(summary_table, "latex", file = "summary_table.tex")
 
 ######################### Checks & Notes ##################################
 sum(map_occ_joined_clip2$occurrences) #910 008 
@@ -709,7 +802,6 @@ any(is.na(intersect3$occurrences))
 indices_with_na <- which(colSums(is.na(intersect3)) > 0)
 print(indices_with_na)
 
-
 any(is.na(intersect3$aphiaID)) #False
 any(is.na(class_taxa$scientificname)) #False
 any(is.na(occ_sf$class)) # True
@@ -718,8 +810,6 @@ any(is.na(occ_sf$genus)) #True
 any(is.na(map_occ_joined_clip1$originalScientificName))  #False
 
 any(is.na(intersect3$phylum))
-
-
 
 length(sum_areas$FYLKESNAVN)
 length(by_county_occ_sum)
