@@ -11,10 +11,23 @@ install.packages("rredlist")
 install.pacakges("patchwork")
 install.packages("formattable")
 install.packages("kableExtra")
+install.packages("openxlsx")
 
 # Pacakge citations
 citation(package = 'worrms')
 citation("IUCNN")
+citation("dplyr")
+citation("robis")
+citation("sf")
+citation("ggplot2")
+citation("kableExtra")
+citation("stats")
+citation("graphics")
+citation("grDevices")
+citation("utils")
+citation("datasets")
+citation("methods")
+citation("base")
 
 # Occurrence Data: WKT string delimits polygon excluding Svalbard and Jan Mayen; Norway = 179 (Accessed 23.02.2024)
 library("dplyr")
@@ -533,6 +546,7 @@ all_county_maps <- all_county_maps +
   theme(plot.margin = unit(c(2, 2, 2, 2), "cm"), 
         aspect.ratio = map_height / map_width)  # Set aspect ratio
 print(all_county_maps)
+
 #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%5
 
 library(ggplot2)
@@ -598,11 +612,16 @@ print(aphiaIDs)
 aphia_classification <- wm_classification_(id = c(aphiaIDs))
 print(aphia_classification)
 
-class_taxa <- aphia_classification %>%
-  filter(rank == "Class") %>%
+# Summarize by species name 
+spp_taxa <- aphia_classification %>%
+  filter(rank == "Species") %>%
   group_by(scientificname, AphiaID) %>%
   summarize(occurrences = n())
-print(class_taxa)
+print(spp_taxa) # 2,551 unique species names 
+
+# Write the list of species to an Excel file
+library(openxlsx)
+spp_xlsx <- write.xlsx(spp_taxa, 'spp_taxa.xlsx')
 
 kingdom_taxa <- aphia_classification %>%
   filter(rank == "Kingdom") %>%
@@ -610,23 +629,62 @@ kingdom_taxa <- aphia_classification %>%
   summarize(occurrences = n())
 print(kingdom_taxa)
 
+# Summarize by Class
+class_taxa <- aphia_classification %>%
+  filter(rank == "Class") %>%
+  group_by(scientificname, AphiaID) %>%
+  summarize(occurrences = n())
+print(class_taxa) # does not include NA
+
 unique(intersect3$class)
 taxa_by_class <- intersect3 %>%
   group_by(class) %>%
   summarize(total_occurrences = sum(occurrences, na.rm = TRUE))
-print(taxa_by_class)
+print(taxa_by_class) # includes NA
+
+sum(taxa_by_class$total_occurrences) # 380,104
 
 # Calculate the ratio of each class versus the total sum of occurrences
-total_sum_by_class <- sum(taxa_by_class$total_occurrences) # Total sum of occurrences
+total_sum_by_class <- sum(taxa_by_class$total_occurrences) # Total sum of occurrences ; 380,104
 
 percentage_occ_per_class <- taxa_by_class %>%
-  mutate(percentage = sprintf("%.5f%%", (total_occurrences / total_sum_by_class) * 100))
-print(percentage_occ_per_class) # percentage column says what percent of the total is each class; overwhelming maj is Aves
-sum(percentage_occ_per_class$total_occurrences)
+  mutate(percentage = sprintf("%.5f%%", (total_occurrences / total_sum_by_class * 100)))
+print(percentage_occ_per_class) # percentage column says what percent of the total is each class
+sum(percentage_occ_per_class$total_occurrences) # 380,104
+
+
+# Doing the same thing as above, but excluding class Aves
+# Summarize by Class
+class_taxa_ex_aves <- aphia_classification %>%
+  filter(rank == "Class" & scientificname != "Aves") %>%
+  group_by(scientificname, AphiaID) %>%
+  summarize(occurrences = n())
+print(class_taxa_ex_aves) # does not include NA
+ 
+taxa_by_class_ex_aves <- intersect3 %>%
+  group_by(class != "Aves") %>%
+  summarize(total_occurrences = sum(occurrences, na.rm = TRUE))
+print(taxa_by_class_ex_aves) # False = 238,713 True = 136,972 NA = 4419
+
+unique(intersect3$class)
+taxa_by_class_ex_aves1 <- intersect3 %>%
+  filter(class !="Aves")%>%
+  group_by(class)%>%
+  summarize(total_occurrences = sum(occurrences, na.rm = TRUE))
+
+print(taxa_by_class_ex_aves1)
+# Calculate the ratio of each class (excluding Aves) versus the total sum of occurrences (excluding Aves)
+total_sum_by_class_ex_aves <- sum(taxa_by_class_ex_aves$total_occurrences) # Total sum of occurrences
+
+percentage_occ_per_class_ex_aves <- taxa_by_class_ex_aves %>%
+  mutate(percentage = sprintf("%.5f%%", (total_occurrences / total_sum_by_class_ex_aves) * 100))
+print(percentage_occ_per_class_ex_aves) # percentage column says what percent of the total is each class
+sum(percentage_occ_per_class_ex_aves$total_occurrences) # 136,972
+
 
 # Returns the data into a format for latex, using kableExtra
 library(kableExtra)
-kable(percentage_occ_per_class, "latex", file = "Percentage_occ_per_class.tex")
+kable(percentage_occ_per_class_ex_aves, "latex", file = "Percentage_occ_per_class_ex_aves.tex")
 
 
 #taxa_classification <- intersect3 %>%
@@ -802,6 +860,7 @@ any(is.na(intersect3$occurrences))
 indices_with_na <- which(colSums(is.na(intersect3)) > 0)
 print(indices_with_na)
 
+
 any(is.na(intersect3$aphiaID)) #False
 any(is.na(class_taxa$scientificname)) #False
 any(is.na(occ_sf$class)) # True
@@ -811,6 +870,12 @@ any(is.na(map_occ_joined_clip1$originalScientificName))  #False
 
 any(is.na(intersect3$phylum))
 
+
+
 length(sum_areas$FYLKESNAVN)
 length(by_county_occ_sum)
 
+
+# notes from EOD 08.04.2024 
+#find better habitat data and also look at the points data in Pro that i opened today. 
+#figure out how to scale the composite map better and also improve the aesthetics of it ; it looks better but not there yet
