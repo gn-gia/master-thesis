@@ -666,32 +666,30 @@ taxa_by_class_ex_aves <- intersect3 %>%
   summarize(total_occurrences = sum(occurrences, na.rm = TRUE))
 print(taxa_by_class_ex_aves) # False = 238,713 True = 136,972 NA = 4419
 
-unique(intersect3$class)
 taxa_by_class_ex_aves1 <- intersect3 %>%
-  filter(class !="Aves")%>%
-  group_by(class)%>%
+  filter(!is.na(class) & class != "Aves") %>%
+  group_by(class) %>%
   summarize(total_occurrences = sum(occurrences, na.rm = TRUE))
 
+# Add a separate row for NA values and bind them to the table
+na_row <- intersect3 %>%
+  filter(is.na(class)) %>%
+  summarize(total_occurrences = sum(occurrences, na.rm = TRUE), class = "NA")
+taxa_by_class_ex_aves1 <- bind_rows(taxa_by_class_ex_aves1, na_row)
 print(taxa_by_class_ex_aves1)
-# Calculate the ratio of each class (excluding Aves) versus the total sum of occurrences (excluding Aves)
-total_sum_by_class_ex_aves <- sum(taxa_by_class_ex_aves$total_occurrences) # Total sum of occurrences
 
-percentage_occ_per_class_ex_aves <- taxa_by_class_ex_aves %>%
+# Calculate the ratio of each class (excluding Aves) versus the total sum of occurrences (excluding Aves)
+total_sum_by_class_ex_aves <- sum(taxa_by_class_ex_aves1$total_occurrences) # Total sum of occurrences
+
+percentage_occ_per_class_ex_aves <- taxa_by_class_ex_aves1 %>%
   mutate(percentage = sprintf("%.5f%%", (total_occurrences / total_sum_by_class_ex_aves) * 100))
 print(percentage_occ_per_class_ex_aves) # percentage column says what percent of the total is each class
-sum(percentage_occ_per_class_ex_aves$total_occurrences) # 136,972
+sum(percentage_occ_per_class_ex_aves$total_occurrences) # 141,391
 
 
 # Returns the data into a format for latex, using kableExtra
 library(kableExtra)
 kable(percentage_occ_per_class_ex_aves, "latex", file = "Percentage_occ_per_class_ex_aves.tex")
-
-
-#taxa_classification <- intersect3 %>%
-#  filter(rank %in% c("kingdom", "phylum", "class", "order", "family", "genus", "sp")) %>%
-#  group_by(rank, scientificname) %>%
-#  summarize(occurrences = sum(occurrences))
-#print(taxa_classification)
 
 #WHAT I WANT TO DO IS RUN THE APHIAID FOR SPECIES NAMES AND THEN RUN THAT LIST USING THE IUCN PACAKGE AGAINST THE IUCN RED LIST DATA TO FIND ANY ENDANGERED SPECIES
 aphia_names <- wm_id2name_(aphiaIDs)
