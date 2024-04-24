@@ -12,6 +12,7 @@ install.pacakges("patchwork")
 install.packages("formattable")
 install.packages("kableExtra")
 install.packages("openxlsx")
+install.packages("units")
 
 # Pacakge citations
 citation(package = 'worrms')
@@ -134,7 +135,7 @@ intersect3_plot <- ggplot() +
   scale_fill_gradient(low = "green", high = "red") +
   scale_color_gradient(low = "green", high = "red") +
   geom_text(data = centroid_data3, aes(label = KOMMUNENAV, x = X, y = Y), size = 3, color = "black") + #trying to figure out why some of the locations of high density aren't showing up
-  theme_bw()
+  theme_bw()   # ADDED ALL THIS TO CHECK WHERE THE RED POINTS ARE
 
 print(intersect3_plot)
 
@@ -732,7 +733,7 @@ intersect3_no_na <- intersect3[, !names(intersect3) %in% c("REF")]
 rows_with_na <- nrow(intersect3) - nrow(intersect3_no_na)
 print(rows_with_na)
 
-#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% SUMMARIZE OCC AND SUMMARY TABLE
 
 # Count the number of occurrences of each species within each county
 #group_sum <- map_occ_joined_clip1 %>%
@@ -774,7 +775,7 @@ sum_areas <- areas %>%
   )
 print(sum_areas)
 
-# Summ all municipality water areas to create total area of water
+# Sum all municipality water areas to create total area of water
 total_area <- sum(sum_areas$Total_Shape_Area)
 print(total_area) #153 623 111 806 meters sq.
 area_sqkm <- sum_areas %>%
@@ -798,7 +799,7 @@ size_ratios <- c(
                 (sum_areas$Total_Shape_Area[sum_areas$FYLKESNAVN == "Vestland"] / total_area), #11.27418401
                 (sum_areas$Total_Shape_Area[sum_areas$FYLKESNAVN == "\u00D8stfold"] / total_area) #0.60595208
 )                 
-print(size_ratios)
+print(size_ratios) #total_shape_area in sq m
 
 # library(formattable)
 
@@ -827,53 +828,68 @@ print(summary_table)
 library(kableExtra)
 kable(summary_table, "latex", file = "summary_table.tex")
 
-######################### Checks & Notes ##################################
-sum(map_occ_joined_clip2$occurrences) #910 008 
-sum(intersect3$occurrences) #380 104  with 0 in class == Aves
-sum(areas$occurrences) #380 104
-sum(by_county_occ_sum$occurrences) #380 104
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% STATS FROM GIS LAYERS
 
-sum(
-  (intersect3_finnmark$occurrences),
-  (intersect3_moere$occurrences),
-  (intersect3_nordland$occurrences),
-  (intersect3_troms$occurrences),
-  (intersect3_troendelag$occurrences),
-  (intersect3_agder$occurrences),
-  (intersect3_akershus$occurrences),
-  (intersect3_buskerud$occurrences),
-  (intersect3_oslo$occurrences), 
-  (intersect3_rogaland$occurrences),
-  (intersect3_telemark$occurrences),
-  (intersect3_vestfold$occurrences),
-  (intersect3_vestland$occurrences),
-  (intersect3_oestfold$occurrences)
-) #380 104
+# Read the shp made in ArcGIS Pro to an sf object - kelp reference areas (https://open-data-fiskeridirektoratet-fiskeridir.hub.arcgis.com/datasets/50c3d14959444e77ac6ed6d96308a2bd_0/explore?location=60.485391%2C9.006054%2C6.49)
+library(ggplot2)
+library(sf)
+tare_shp <- st_read("C:/Users/gngia/OneDrive/Documents/new obis/tare_referense_omr_new.shp", stringsAsFactors=FALSE)
+tare_shp <- st_transform(tare_shp, crs = "EPSG:4326")
+print(tare_shp1 <- st_crs(tare_shp)) # area is in sq km
+class(tare_shp)
 
-sum(summary_table$Total_Occurrences.occurrences) #380 104
+ggplot() +
+  geom_sf(data = shp) +
+  geom_sf(data = shp2) +
+  geom_sf(data = tare_shp, aes(color = "blue"), size = 0.25) +
+  theme_bw()
 
-----------------------------------------------------------
-any(is.na(intersect3$FYLKESNAVN))
-any(is.na(intersect3$occurrences))
-indices_with_na <- which(colSums(is.na(intersect3)) > 0)
-print(indices_with_na)
+unique(tare_shp$fylke)
 
+# Find the sums of all areas of kelp reference areas per county
+# Use the sum of municipality areas summed for each county = sum_areas from above
+# Calculate the proportion of kelp reference areas per county relative to the total area of each county
+tare_ref_omr_ratios <- c(
+  (sum(tare_shp$area[tare_shp$fylke == "M\u00F8re og Romsdal"]) / (sum_areas$Total_Shape_Area[sum_areas$FYLKESNAVN == "\"M\u00F8re og Romsdal\""]*1e-06)*100), # 0.7447074
+  (sum(tare_shp$area[tare_shp$fylke == "Tr\u00F8ndelag"]) / (sum_areas$Total_Shape_Area[sum_areas$FYLKESNAVN == "\"Tr\u00F8ndelag - Tr\u00F6\u00F6ndelage\""]*1e-06)*100), # 0.7913688
+  (sum(tare_shp$area[tare_shp$fylke == "Vestland"]) / (sum_areas$Total_Shape_Area[sum_areas$FYLKESNAVN == "Vestland"]*1e-06)*100), # 0.1713162
+  (sum(tare_shp$area[tare_shp$fylke == "Nordland"]) / (sum_areas$Total_Shape_Area[sum_areas$FYLKESNAVN == "\"Nordland - Nordl\u00E1nnda\""]*1e-06)*100) # 0.3765071
+)
+print(tare_ref_omr_ratios)
 
-any(is.na(intersect3$aphiaID)) #False
-any(is.na(class_taxa$scientificname)) #False
-any(is.na(occ_sf$class)) # True
-any(is.na(occ_sf$phylum)) #True
-any(is.na(occ_sf$genus)) #True 
-any(is.na(map_occ_joined_clip1$originalScientificName))  #False
+# Make tare_ref_omr_ratios outputs into percentages
+tare_ref_percent <- c(0.1713162, 0.7447074, 0.7913688, 0.3765071)
+tare_ref_percent <- paste0(round(tare_ref_percent, 2), "%")
+print(tare_ref_percent)
 
-any(is.na(intersect3$phylum))
+# Read the shp made in ArcGIS Pro to an sf object - kelp harvest fields (https://open-data-fiskeridirektoratet-fiskeridir.hub.arcgis.com/datasets/a2b8a2e2b296451c9469a4a01a9f617b_3/explore?location=62.211465%2C10.109458%2C5.77)
+tare_hostfelt_shp <- st_read("C:/Users/gngia/OneDrive/Documents/new obis/tare_hostfelt_new.shp", stringsAsFactors=FALSE)
+tare_hostfelt_shp <- st_transform(tare_hostfelt_shp, crs = "EPSG:4326")
+print(tare_hostfelt_shp1 <- st_crs(tare_hostfelt_shp)) # area is in sq km
+class(tare_hostfelt_shp)
 
+ggplot() +
+  geom_sf(data = shp) +
+  geom_sf(data = shp2) +
+  geom_sf(data = tare_hostfelt_shp, aes(color = "blue"), size = 0.25) +
+  theme_bw()
 
+unique(tare_hostfelt_shp$fylke)
 
-length(sum_areas$FYLKESNAVN)
-length(by_county_occ_sum)
+# Find the sums of all areas of kelp harvest field per county
+# Use the sum of municipality areas summed for each county = sum_areas from above
+# Calculate the proportion of kelp harvest fields per county relative to the total area of each county
+tare_ratios <- c(
+  (sum(tare_hostfelt_shp$area[tare_hostfelt_shp$fylke == "M\u00F8re og Romsdal"]) / (sum_areas$Total_Shape_Area[sum_areas$FYLKESNAVN == "\"M\u00F8re og Romsdal\""]*1e-06)*100), # 2.939564e+01
+  (sum(tare_hostfelt_shp$area[tare_hostfelt_shp$fylke == "M&R og Tr\u00F8ndelag"]) /  ((sum_areas$Total_Shape_Area[sum_areas$FYLKESNAVN == "\"M\u00F8re og Romsdal\""]) + (sum_areas$Total_Shape_Area[sum_areas$FYLKESNAVN == "\"Tr\u00F8ndelag - Tr\u00F6\u00F6ndelage\""])*1e-06)*100), # 4.287311e-06
+  (sum(tare_hostfelt_shp$area[tare_hostfelt_shp$fylke == "Tr\u00F8ndelag"]) / (sum_areas$Total_Shape_Area[sum_areas$FYLKESNAVN == "\"Tr\u00F8ndelag - Tr\u00F6\u00F6ndelage\""]*1e-06)*100), # 4.634014e+01
+  (sum(tare_hostfelt_shp$area[tare_hostfelt_shp$fylke == "Rogaland"]) / (sum_areas$Total_Shape_Area[sum_areas$FYLKESNAVN == "Rogaland"]*1e-06)*100), # 1.929668e+01
+  (sum(tare_hostfelt_shp$area[tare_hostfelt_shp$fylke == "Vestland"]) / (sum_areas$Total_Shape_Area[sum_areas$FYLKESNAVN == "Vestland"]*1e-06)*100), # 2.927445e+01
+  (sum(tare_hostfelt_shp$area[tare_hostfelt_shp$fylke == "Nordland"]) / (sum_areas$Total_Shape_Area[sum_areas$FYLKESNAVN == "\"Nordland - Nordl\u00E1nnda\""]*1e-06)*100) # 1.441436e+00
+)
+print(tare_ratios)
 
-
-# notes from EOD 08.04.2024 
-#find better habitat data and also look at the points data in Pro that i opened today. 
-#figure out how to scale the composite map better and also improve the aesthetics of it ; it looks better but not there yet
+# Make tare_ratios outputs into percentages
+tare_hostfelt_percent <- c(2.939564e+01, 4.287311e-06, 4.634014e+01, 1.929668e+01, 2.927445e+01, 1.441436e+00)
+tare_hostfelt_percent <- paste0(round(tare_hostfelt_percent, 2), "%")
+print(tare_hostfelt_percent)
