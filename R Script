@@ -817,7 +817,7 @@ print(by_county_occ_sum)
 # Create a summary table 
 summary_table <- data.frame(
   FYLKESNAVN = sum_areas$FYLKESNAVN,
-  area_sqkm = (area_sqkm$area_sqkm), # Using area_sqkm directly
+  area_sqkm = area_sqkm$area_sqkm, # Using area_sqkm directly
   size_percentage = size_percentage, # Include the size percentage directly
   Total_Occurrences = (by_county_occ_sum$occurrences),
   occurrence_percentage = occurrence_percentage # Include the occurrence percentage directly
@@ -829,10 +829,10 @@ library(kableExtra)
 kable(summary_table, "latex", file = "summary_table.tex")
 
 #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% STATS FROM GIS LAYERS
-
-# Read the shp made in ArcGIS Pro to an sf object - kelp reference areas (https://open-data-fiskeridirektoratet-fiskeridir.hub.arcgis.com/datasets/50c3d14959444e77ac6ed6d96308a2bd_0/explore?location=60.485391%2C9.006054%2C6.49)
 library(ggplot2)
 library(sf)
+
+# Read the shp made in ArcGIS Pro to an sf object - kelp reference areas (https://open-data-fiskeridirektoratet-fiskeridir.hub.arcgis.com/datasets/50c3d14959444e77ac6ed6d96308a2bd_0/explore?location=60.485391%2C9.006054%2C6.49)
 tare_shp <- st_read("C:/Users/gngia/OneDrive/Documents/new obis/tare_referense_omr_new.shp", stringsAsFactors=FALSE)
 tare_shp <- st_transform(tare_shp, crs = "EPSG:4326")
 print(tare_shp1 <- st_crs(tare_shp)) # area is in sq km
@@ -841,7 +841,7 @@ class(tare_shp)
 ggplot() +
   geom_sf(data = shp) +
   geom_sf(data = shp2) +
-  geom_sf(data = tare_shp, aes(color = "blue"), size = 0.25) +
+  geom_sf(data = tare_shp, aes(color = "fylke"), size = 0.25) +
   theme_bw()
 
 unique(tare_shp$fylke)
@@ -857,7 +857,7 @@ tare_ref_omr_ratios <- c(
 )
 print(tare_ref_omr_ratios)
 
-# Make tare_ref_omr_ratios outputs into percentages
+# Make tare_ref_omr_ratios output into percentages
 tare_ref_percent <- c(0.1713162, 0.7447074, 0.7913688, 0.3765071)
 tare_ref_percent <- paste0(round(tare_ref_percent, 2), "%")
 print(tare_ref_percent)
@@ -871,14 +871,14 @@ class(tare_hostfelt_shp)
 ggplot() +
   geom_sf(data = shp) +
   geom_sf(data = shp2) +
-  geom_sf(data = tare_hostfelt_shp, aes(color = "blue"), size = 0.25) +
+  geom_sf(data = tare_hostfelt_shp, aes(color = "fylke"), size = 1) +
   theme_bw()
 
 unique(tare_hostfelt_shp$fylke)
 
 # Find the sums of all areas of kelp harvest field per county
 # Use the sum of municipality areas summed for each county = sum_areas from above
-# Calculate the proportion of kelp harvest fields per county relative to the total area of each county
+# Calculate the proportion of kelp harvest fields per county relative to the total area of each county water
 tare_ratios <- c(
   (sum(tare_hostfelt_shp$area[tare_hostfelt_shp$fylke == "M\u00F8re og Romsdal"]) / (sum_areas$Total_Shape_Area[sum_areas$FYLKESNAVN == "\"M\u00F8re og Romsdal\""]*1e-06)*100), # 2.939564e+01
   (sum(tare_hostfelt_shp$area[tare_hostfelt_shp$fylke == "M&R og Tr\u00F8ndelag"]) /  ((sum_areas$Total_Shape_Area[sum_areas$FYLKESNAVN == "\"M\u00F8re og Romsdal\""]) + (sum_areas$Total_Shape_Area[sum_areas$FYLKESNAVN == "\"Tr\u00F8ndelag - Tr\u00F6\u00F6ndelage\""])*1e-06)*100), # 4.287311e-06
@@ -889,7 +889,193 @@ tare_ratios <- c(
 )
 print(tare_ratios)
 
-# Make tare_ratios outputs into percentages
+# Make tare_ratios output into percentages
 tare_hostfelt_percent <- c(2.939564e+01, 4.287311e-06, 4.634014e+01, 1.929668e+01, 2.927445e+01, 1.441436e+00)
 tare_hostfelt_percent <- paste0(round(tare_hostfelt_percent, 2), "%")
 print(tare_hostfelt_percent)
+
+
+# SHOULD I ADD TARE HOESTFORBUD REVTANGEN TOO? I THINK IT IS ONLY 1 PLACE IN ROGALAND?
+
+# Read the shp made in ArcGIS Pro to an sf object - coral reef  (https://open-data-fiskeridirektoratet-fiskeridir.hub.arcgis.com/datasets/6466197faeb9430c9665d24a05ae3372_11/explore?location=65.127684%2C15.822468%2C5.01)
+#"Prohibition on the use of tools that are towed while fishing, as well as nets, lines and fishing lines"
+korall_forbudsomr_shp <- st_read("C:/Users/gngia/OneDrive/Documents/new obis/Korall_rev_forbudsomr_new.shp", stringsAsFactors=FALSE)
+korall_forbudsomr_shp <- st_transform(korall_forbudsomr_shp, crs = "EPSG:4326")
+print(korall_forbudsomr_shp1 <- st_crs(korall_forbudsomr_shp)) # area is in sq km
+class(korall_forbudsomr_shp)
+
+unique(korall_forbudsomr_shp$FYLKESNAVN)
+
+# Find the sums of all areas of prohibited fishing areas near corals per county
+# Use the sum of municipality areas summed for each county = sum_areas from above
+# Calculate the proportion of prohibited fishing areas near corals per county relative to the total area of each county water
+korall_forbudsomr_ratios <- c(
+  (sum(korall_forbudsomr_shp$area[korall_forbudsomr_shp$FYLKESNAVN == "\"M\u00F8re og Romsdal\""]) / (sum_areas$Total_Shape_Area[sum_areas$FYLKESNAVN == "\"M\u00F8re og Romsdal\""]*1e-06)*100), # 0.372049970
+  (sum(korall_forbudsomr_shp$area[korall_forbudsomr_shp$FYLKESNAVN == "\u00D8stfold"]) / (sum_areas$Total_Shape_Area[sum_areas$FYLKESNAVN == "\u00D8stfold"]*1e-06)*100), # 1.215242501
+  (sum(korall_forbudsomr_shp$area[korall_forbudsomr_shp$FYLKESNAVN == "\"Troms - Romsa - Tromssa\"" ]) / (sum_areas$Total_Shape_Area[sum_areas$FYLKESNAVN == "\"Troms - Romsa - Tromssa\""]*1e-06)*100), # 0.281538206
+  (sum(korall_forbudsomr_shp$area[korall_forbudsomr_shp$FYLKESNAVN == "\"Nordland - Nordl\u00E1nnda\"" ]) / (sum_areas$Total_Shape_Area[sum_areas$FYLKESNAVN == "\"Nordland - Nordl\u00E1nnda\""]*1e-06)*100), # 0.267002361
+  (sum(korall_forbudsomr_shp$area[korall_forbudsomr_shp$FYLKESNAVN == "\"Finnmark - Finnm\u00E1rku - Finmarkku\""]) / (sum_areas$Total_Shape_Area[sum_areas$FYLKESNAVN == "\"Finnmark - Finnm\u00E1rku - Finmarkku\""]*1e-06)*100), # 0.014312180
+  (sum(korall_forbudsomr_shp$area[korall_forbudsomr_shp$FYLKESNAVN == "Rogaland"]) / (sum_areas$Total_Shape_Area[sum_areas$FYLKESNAVN == "Rogaland"]*1e-06)*100), # 0.001301746
+  (sum(korall_forbudsomr_shp$area[korall_forbudsomr_shp$FYLKESNAVN == "Vestland"]) / (sum_areas$Total_Shape_Area[sum_areas$FYLKESNAVN == "Vestland"]*1e-06)*100), # 0.003860877
+  (sum(korall_forbudsomr_shp$area[korall_forbudsomr_shp$FYLKESNAVN == "\"Tr\u00F8ndelag - Tr\u00F6\u00F6ndelage\""]) / (sum_areas$Total_Shape_Area[sum_areas$FYLKESNAVN == "\"Tr\u00F8ndelag - Tr\u00F6\u00F6ndelage\""]*1e-06)*100) # 0.052212350
+)
+print(korall_forbudsomr_ratios)
+
+# Make output into percentages
+korall_forbudsomr_percent <- c(0.372049970, 1.215242501, 0.281538206, 0.267002361, 0.014312180, 0.001301746, 0.003860877, 0.052212350)
+korall_forbudsomr_percent <- paste0(round(korall_forbudsomr_percent, 2), "%")
+print(korall_forbudsomr_percent)
+
+
+# Read the shp made in ArcGIS Pro to an sf object - IMR identified coral reefs (https://kart.hi.no/mareano/web/wicket/bookmarkable/org.geoserver.web.demo.MapPreviewPage?0&filter=false)
+korall_id_shp <- st_read("C:/Users/gngia/OneDrive/Documents/new obis/korall_rev_id_new.shp", stringsAsFactors=FALSE)
+korall_id_shp <- st_transform(korall_id_shp, crs = "EPSG:4326")
+print(korall_id_shp1 <- st_crs(korall_id_shp)) # area is in sq km
+class(korall_id_shp)
+
+unique(korall_id_shp$FYLKESNAVN)
+
+# Find the sums of all areas of identified coral reefs (by IMR) per county
+# Use the sum of municipality areas summed for each county = sum_areas from above
+# Calculate the proportion of identified coral reefs (by IMR) per county relative to the total area of each county water
+korall_id_ratios <- c(
+  (sum(korall_id_shp$area[korall_id_shp$FYLKESNAVN == "\"M\u00F8re og Romsdal\""]) / (sum_areas$Total_Shape_Area[sum_areas$FYLKESNAVN == "\"M\u00F8re og Romsdal\""]*1e-06)*100), # 0.01419937
+  (sum(korall_id_shp$area[korall_id_shp$FYLKESNAVN == "\u00D8stfold"]) / (sum_areas$Total_Shape_Area[sum_areas$FYLKESNAVN == "\u00D8stfold"]*1e-06)*100), # 1.20670438
+  (sum(korall_id_shp$area[korall_id_shp$FYLKESNAVN == "\"Finnmark - Finnm\u00E1rku - Finmarkku\""]) / (sum_areas$Total_Shape_Area[sum_areas$FYLKESNAVN == "\"Finnmark - Finnm\u00E1rku - Finmarkku\""]*1e-06)*100) # 0.10477064
+)
+print(korall_id_ratios)
+
+# Read the shp made in ArcGIS Pro to an sf object - Coral MPA / Coral conservation areas (https://kart.hi.no/mareano/web/wicket/bookmarkable/org.geoserver.web.demo.MapPreviewPage?0&filter=false)
+koral_vern_omr <- st_read("C:/Users/gngia/OneDrive/Documents/new obis/korall_rev_vern_omr.shp", stringsAsFactors=FALSE)
+koral_vern_omr <- st_transform(koral_vern_omr, crs = "EPSG:4326")
+print(koral_vern_omr1 <- st_crs(koral_vern_omr)) # area is in sq km
+class(koral_vern_omr)
+
+unique(koral_vern_omr$FYLKESNAVN)
+
+# Find the sums of all areas of prohibited fishing areas near corals per county
+# Use the sum of municipality areas summed for each county = sum_areas from above
+# Calculate the proportion of prohibited fishing areas near corals per county relative to the total area of each county water
+korall_vernomr_ratios <- c(
+  (sum(koral_vern_omr$area[koral_vern_omr$FYLKESNAVN == "\"M\u00F8re og Romsdal\""]) / (sum_areas$Total_Shape_Area[sum_areas$FYLKESNAVN == "\"M\u00F8re og Romsdal\""]*1e-06)*100), # 0.372049970
+  (sum(koral_vern_omr$area[koral_vern_omr$FYLKESNAVN == "\u00D8stfold"]) / (sum_areas$Total_Shape_Area[sum_areas$FYLKESNAVN == "\u00D8stfold"]*1e-06)*100), # 1.215242501
+  (sum(koral_vern_omr$area[koral_vern_omr$FYLKESNAVN == "\"Troms - Romsa - Tromssa\"" ]) / (sum_areas$Total_Shape_Area[sum_areas$FYLKESNAVN == "\"Troms - Romsa - Tromssa\""]*1e-06)*100), # 0.281538206
+  (sum(koral_vern_omr$area[koral_vern_omr$FYLKESNAVN == "\"Nordland - Nordl\u00E1nnda\"" ]) / (sum_areas$Total_Shape_Area[sum_areas$FYLKESNAVN == "\"Nordland - Nordl\u00E1nnda\""]*1e-06)*100), # 0.267002361
+  (sum(koral_vern_omr$area[koral_vern_omr$FYLKESNAVN == "\"Finnmark - Finnm\u00E1rku - Finmarkku\""]) / (sum_areas$Total_Shape_Area[sum_areas$FYLKESNAVN == "\"Finnmark - Finnm\u00E1rku - Finmarkku\""]*1e-06)*100), # 0.014312180
+  (sum(koral_vern_omr$area[koral_vern_omr$FYLKESNAVN == "Rogaland"]) / (sum_areas$Total_Shape_Area[sum_areas$FYLKESNAVN == "Rogaland"]*1e-06)*100), # 0.001301746
+  (sum(koral_vern_omr$area[koral_vern_omr$FYLKESNAVN == "Vestland"]) / (sum_areas$Total_Shape_Area[sum_areas$FYLKESNAVN == "Vestland"]*1e-06)*100), # 0.003860877
+  (sum(koral_vern_omr$area[koral_vern_omr$FYLKESNAVN == "\"Tr\u00F8ndelag - Tr\u00F6\u00F6ndelage\""]) / (sum_areas$Total_Shape_Area[sum_areas$FYLKESNAVN == "\"Tr\u00F8ndelag - Tr\u00F6\u00F6ndelage\""]*1e-06)*100) # 0.052212350
+)
+print(korall_vernomr_ratios)
+
+
+# korall_rev_vern_omr and Korall_rev_forbudsomr_new actually seem to be the same exact data 
+#except in korall vern they call them Coral MPAs and in forbudsomr they just say you cant fish or drag line through those areas
+
+wdpa_apr <- st_read("C:/Users/gngia/OneDrive/Documents/new obis/wpda_wdoecm_apr.shp", stringsAsFactors=FALSE)
+wdpa_apr <- st_transform(wdpa_apr, crs = "EPSG:4326")
+print(wdpa_apr1 <- st_crs(wdpa_apr)) # area is in sq km
+
+
+wdpa_mar <- st_read("C:/Users/gngia/OneDrive/Documents/new obis/wpda_wdoecm_mar.shp", stringsAsFactors=FALSE)
+wdpa_mar <- st_transform(wdpa_mar, crs = "EPSG:4326")
+print(wdpa_mar1 <- st_crs(wdpa_mar)) # area is in sq km
+
+
+svo <- st_read("C:/Users/gngia/OneDrive/Documents/new obis/svo.shp", stringsAsFactors=FALSE)
+svo <- st_transform(svo, crs = "EPSG:4326")
+print(svo1 <- st_crs(svo)) # area is in sq km
+
+
+carto_mpa <- st_read("C:/Users/gngia/OneDrive/Documents/new obis/carto_mpa.shp", stringsAsFactors=FALSE)
+carto_mpa <- st_transform(carto_mpa, crs = "EPSG:4326")
+print(carto_mpa1 <- st_crs(carto_mpa)) # area is in sq km
+
+
+ospar_mpa <- st_read("C:/Users/gngia/OneDrive/Documents/new obis/ospar_mpa.shp", stringsAsFactors=FALSE)
+ospar_mpa <- st_transform(ospar_mpa, crs = "EPSG:4326")
+print(ospar_mpa1 <- st_crs(ospar_mpa)) # area is in sq km
+
+
+naturvernomr <- st_read("C:/Users/gngia/OneDrive/Documents/new obis/naturvernomr.shp", stringsAsFactors=FALSE)
+naturvernomr <- st_transform(naturvernomr, crs = "EPSG:4326")
+print(naturvernomr1 <- st_crs(naturvernomr)) # area is in sq km
+
+# MIGHT HAVE TO FIX A UNICODE THING IN THIS ONE ^^^
+
+kba <- st_read("C:/Users/gngia/OneDrive/Documents/new obis/kba.shp", stringsAsFactors=FALSE)
+kba <- st_transform(kba, crs = "EPSG:4326")
+print(kba1 <- st_crs(kba)) # area is in sq km
+
+
+ramsar <- st_read("C:/Users/gngia/OneDrive/Documents/new obis/ramsar.shp", stringsAsFactors=FALSE)
+ramsar <- st_transform(ramsar, crs = "EPSG:4326")
+print(ramsar1 <- st_crs(ramsar)) # area is in sq km
+
+# MIGHT HAVE TO FIX A UNICODE THING IN THIS ONE TOO ^^^
+
+
+
+#Notes from 24.04
+# finish running the ratios on the above shps. 
+# write methods and add all of the stuff from 23.04 and 24.04 to results
+# intro + move stuff to word ?
+
+
+
+# Notes from 23.04 
+#got the two kelp shps in and can use area_sqkm to calc % coverage per county.
+#do the same with IBA, KBA, SVO, MPA, Coral MPA, etc.
+
+
+#i can sum all the areas for each county in tare shps and then divide those by the total shape area in areasqkm
+
+######################### Checks & Notes ##################################
+sum(map_occ_joined_clip2$occurrences) #910 008 
+sum(intersect3$occurrences) #380 104  with 0 in class == Aves
+sum(areas$occurrences) #380 104
+sum(by_county_occ_sum$occurrences) #380 104
+
+sum(
+  (intersect3_finnmark$occurrences),
+  (intersect3_moere$occurrences),
+  (intersect3_nordland$occurrences),
+  (intersect3_troms$occurrences),
+  (intersect3_troendelag$occurrences),
+  (intersect3_agder$occurrences),
+  (intersect3_akershus$occurrences),
+  (intersect3_buskerud$occurrences),
+  (intersect3_oslo$occurrences), 
+  (intersect3_rogaland$occurrences),
+  (intersect3_telemark$occurrences),
+  (intersect3_vestfold$occurrences),
+  (intersect3_vestland$occurrences),
+  (intersect3_oestfold$occurrences)
+) #380 104
+
+sum(summary_table$Total_Occurrences.occurrences) #380 104
+
+(3535.2188/ 11992319367)*100
+(514.1488 / (18672331023 + 11992319367))*100
+(8652.7844 /18672331023)*100
+----------------------------------------------------------
+any(is.na(intersect3$FYLKESNAVN))
+any(is.na(intersect3$occurrences))
+indices_with_na <- which(colSums(is.na(intersect3)) > 0)
+print(indices_with_na)
+
+
+any(is.na(intersect3$aphiaID)) #False
+any(is.na(class_taxa$scientificname)) #False
+any(is.na(occ_sf$class)) # True
+any(is.na(occ_sf$phylum)) #True
+any(is.na(occ_sf$genus)) #True 
+any(is.na(map_occ_joined_clip1$originalScientificName))  #False
+
+any(is.na(intersect3$phylum))
+
+
+
+# notes from EOD 08.04.2024 
+#find better habitat data and also look at the points data in Pro that i opened today. 
+#figure out how to scale the composite map better and also improve the aesthetics of it ; it looks better but not there yet
