@@ -134,14 +134,10 @@ View(intersect3)
 class(intersect3) # sf, tbl_df, tbl, data.frame
 
 # Plot the intersection 
-intersect3_plot <- ggplot() +
+ggplot() +
   geom_sf(data = shp) +
-  geom_sf(data = shp2, color = "gold", size = 0.2, fill = NA) +
-  geom_sf(data = intersect3, aes(color = occurrences), size = 0.75, fill = NA) +
-  scale_fill_gradient(low = "green", high = "red") +
-  scale_color_gradient(low = "green", high = "red") +
-  geom_text(data = centroid_data3, aes(label = KOMMUNENAV, x = X, y = Y), size = 3, color = "black") + #trying to figure out why some of the locations of high density aren't showing up
-  theme_bw()   # ADDED ALL THIS TO CHECK WHERE THE RED POINTS ARE
+  geom_sf(data = shp2, color = "gold", size = 0.2, fill = NA) 
+  theme_bw()
 
 print(intersect3_plot)
 
@@ -159,6 +155,9 @@ intersect3_troms <- intersect3 %>%
 centroid_data1 <- st_centroid(shp2_troms)
 centroid_data1 <- cbind(centroid_data1, st_coordinates(centroid_data1))
 
+# Filter centroid_data1 to include only specific values of KOMMUNENAV
+specific_points1 <- centroid_data1[centroid_data1$KOMMUNENAV %in% c("Karls\u00F8y", "Troms\u00F8"), ]
+
 # Plot with labels
 troms_map <-ggplot() +
   geom_sf(data = shp2_troms, color = "gold", size = 0.2, fill = NA) +
@@ -166,7 +165,7 @@ troms_map <-ggplot() +
   scale_fill_gradient(low = "green", high = "red") +
   scale_color_gradient(low = "green", high = "red") +  # Adding color scale for points
   ggtitle("Troms") +
-  geom_text(data = centroid_data1, aes(label = KOMMUNENAV, x = X, y = Y), size = 3, color = "black") +
+  geom_text(data = specific_points1, aes(label = KOMMUNENAV, x = X, y = Y), size = 3, color = "black") +
   theme_bw() +
   theme(axis.title.x = element_blank(),  # Remove x-axis title
         axis.title.y = element_blank(),  # Remove y-axis title
@@ -185,6 +184,9 @@ intersect3_akershus <- intersect3 %>%
 centroid_data2 <- st_centroid(shp2_akershus)
 centroid_data2 <- cbind(centroid_data2, st_coordinates(centroid_data2))
 
+# Filter centroid_data2 to include only specific values of KOMMUNENAV
+specific_points2 <- centroid_data2[centroid_data2$KOMMUNENAV %in% c("\u00C5s", "Asker"), ]
+
 # Plot with labels
 akershus_map <- ggplot() +
   geom_sf(data = shp2_akershus, color = "gold", size = 0.2, fill = NA) +
@@ -192,7 +194,7 @@ akershus_map <- ggplot() +
   scale_fill_gradient(low = "green", high = "red") +
   scale_color_gradient(low = "green", high = "red") +  # Adding color scale for points
   ggtitle("Akershus") +
-  geom_text(data = centroid_data2, aes(label = KOMMUNENAV, x = X, y = Y), size = 3, color = "black") +
+  geom_text(data = specific_points2, aes(label = KOMMUNENAV, x = X, y = Y), size = 3, color = "black") +
   theme_bw() +
   theme(axis.title.x = element_blank(),  # Remove x-axis title
         axis.title.y = element_blank(),  # Remove y-axis title
@@ -211,14 +213,16 @@ intersect3_moere <- intersect3 %>%
 centroid_data3 <- st_centroid(shp2_moere)
 centroid_data3 <- cbind(centroid_data3, st_coordinates(centroid_data3))
 
-# Plot with labels
+# Filter centroid_data3 to include only specific values of KOMMUNENAV
+specific_points3 <- centroid_data3[centroid_data3$KOMMUNENAV %in% c("Molde", "Kristiansund"), ]
+
 moere_map <- ggplot() +
   geom_sf(data = shp2_moere, color = "gold", size = 0.2, fill = NA) +
-  geom_sf(data = intersect3_moere, aes(color = occurrences), size = 5, fill = NA) +
+  geom_sf(data = intersect3_moere, aes(color = occurrences), size = 3.5, fill = NA) +
   scale_fill_gradient(low = "green", high = "red") +
   scale_color_gradient(low = "green", high = "red") +  # Adding color scale for points
   ggtitle("M\u00F8re og Romsdal") +
-  geom_text(data = centroid_data3, aes(label = KOMMUNENAV, x = X, y = Y), size = 3, color = "black") +
+  geom_text(data = specific_points3, aes(label = KOMMUNENAV, x = X, y = Y), size = 3, color = "black") +
   theme_bw()+
   theme(axis.title.x = element_blank(),  # Remove x-axis title
         axis.title.y = element_blank(),  # Remove y-axis title
@@ -237,13 +241,16 @@ intersect3_oestfold <- intersect3 %>%
 centroid_data4 <- st_centroid(shp2_oestfold)
 centroid_data4 <- cbind(centroid_data4, st_coordinates(centroid_data4))
 
+# Filter centroid_data4 to include only specific values of KOMMUNENAV
+specific_points4 <- centroid_data4[centroid_data4$KOMMUNENAV %in% c("Moss", "Fredrikstad"), ]
+
 oestfold_map <- ggplot() +
   geom_sf(data = shp2_oestfold, color = "gold", size = 0.2, fill = NA) +
   geom_sf(data = intersect3_oestfold, aes(color = occurrences), size = 0.75, fill = NA) +
   scale_fill_gradient(low = "green", high = "red") +
   scale_color_gradient(low = "green", high = "red") +
   ggtitle("\u00D8stfold") +
-  geom_text(data = centroid_data4, aes(label = KOMMUNENAV, x = X, y = Y), size = 3, color = "black") +
+  geom_text(data = specific_points4, aes(label = KOMMUNENAV, x = X, y = Y), size = 3, color = "black") +
   theme_bw() +
   theme(axis.title.x = element_blank(),  # Remove x-axis title
         axis.title.y = element_blank(),  # Remove y-axis title
@@ -262,6 +269,9 @@ intersect3_vestland <- intersect3 %>%
 centroid_data5 <- st_centroid(shp2_vestland)
 centroid_data5 <- cbind(centroid_data5, st_coordinates(centroid_data5))
 
+# Filter centroid_data5 to include only specific values of KOMMUNENAV
+specific_points5 <- centroid_data5[centroid_data5$KOMMUNENAV %in% c("Bergen"), ]
+
 # Plot with labels
 vestland_map <- ggplot() +
   geom_sf(data = shp2_vestland, color = "gold", size = 0.2, fill = NA) +
@@ -269,7 +279,7 @@ vestland_map <- ggplot() +
   scale_fill_gradient(low = "green", high = "red") +
   scale_color_gradient(low = "green", high = "red") +  # Adding color scale for points
   ggtitle("Vestland") +
-  geom_text(data = centroid_data5, aes(label = KOMMUNENAV, x = X, y = Y), size = 3, color = "black") +
+  geom_text(data = specific_points5, aes(label = KOMMUNENAV, x = X, y = Y), size = 3, color = "black") +
   theme_bw() +
   theme(axis.title.x = element_blank(),  # Remove x-axis title
         axis.title.y = element_blank(),  # Remove y-axis title
@@ -287,6 +297,9 @@ intersect3_nordland <- intersect3 %>% filter(FYLKESNAVN == "\"Nordland - Nordl\u
 centroid_data6 <- st_centroid(shp2_nordland)
 centroid_data6 <- cbind(centroid_data6, st_coordinates(centroid_data6))
 
+# Filter centroid_data6 to include only specific values of KOMMUNENAV
+specific_points6 <- centroid_data6[centroid_data6$KOMMUNENAV %in% c("Bod\u00F8", "\u00D8ksnes"), ]
+
 # Plot with labels
 nordland_map <- ggplot() +
   geom_sf(data = shp2_nordland, color = "gold", size = 0.2, fill = NA) +
@@ -294,7 +307,7 @@ nordland_map <- ggplot() +
   scale_fill_gradient(low = "green", high = "red") +
   scale_color_gradient(low = "green", high = "red") +  # Adding color scale for points
   ggtitle("Nordland") +
-  geom_text(data = centroid_data6, aes(label = KOMMUNENAV, x = X, y = Y), size = 3, color = "black") +
+  geom_text(data = specific_points6, aes(label = KOMMUNENAV, x = X, y = Y), size = 3, color = "black") +
   theme_bw() +
   theme(axis.title.x = element_blank(),  # Remove x-axis title
         axis.title.y = element_blank(),  # Remove y-axis title
@@ -313,6 +326,9 @@ intersect3_rogaland <- intersect3 %>%
 centroid_data7 <- st_centroid(shp2_rogaland)
 centroid_data7 <- cbind(centroid_data7, st_coordinates(centroid_data7))
 
+# Filter centroid_data7 to include only specific values of KOMMUNENAV
+specific_points7 <- centroid_data7[centroid_data7$KOMMUNENAV %in% c("Stavanger", "Haugesund"), ]
+
 # Plot with labels
 rogaland_map <- ggplot() +
   geom_sf(data = shp2_rogaland, color = "gold", size = 0.2, fill = NA) +
@@ -320,7 +336,7 @@ rogaland_map <- ggplot() +
   scale_fill_gradient(low = "green", high = "red") +
   scale_color_gradient(low = "green", high = "red") +  # Adding color scale for points
   ggtitle("Rogaland") +
-  geom_text(data = centroid_data7, aes(label = KOMMUNENAV, x = X, y = Y), size = 3, color = "black") +
+  geom_text(data = specific_points7, aes(label = KOMMUNENAV, x = X, y = Y), size = 3, color = "black") +
   theme_bw() +
   theme(axis.title.x = element_blank(),  # Remove x-axis title
         axis.title.y = element_blank(),  # Remove y-axis title
@@ -339,6 +355,9 @@ intersect3_troendelag <- intersect3 %>%
 centroid_data8 <- st_centroid(shp2_troendelag)
 centroid_data8 <- cbind(centroid_data8, st_coordinates(centroid_data8))
 
+# Filter centroid_data8 to include only specific values of KOMMUNENAV
+specific_points8 <- centroid_data8[centroid_data8$KOMMUNENAV %in% c("Steinkjer", "Heim"), ]
+
 # Plot with labels
 troendelag_map <- ggplot() +
   geom_sf(data = shp2_troendelag, color = "gold", size = 0.2, fill = NA) +
@@ -346,7 +365,7 @@ troendelag_map <- ggplot() +
   scale_fill_gradient(low = "green", high = "red") +
   scale_color_gradient(low = "green", high = "red") +  # Adding color scale for points
   ggtitle("Tr\u00F8ndelag") +
-  geom_text(data = centroid_data8, aes(label = KOMMUNENAV, x = X, y = Y), size = 2.5, color = "black") +
+  geom_text(data = specific_points8, aes(label = KOMMUNENAV, x = X, y = Y), size = 2.5, color = "black") +
   theme_bw() +
   theme(axis.title.x = element_blank(),  # Remove x-axis title
         axis.title.y = element_blank(),  # Remove y-axis title
@@ -365,6 +384,9 @@ intersect3_finnmark <- intersect3 %>%
 centroid_data9 <- st_centroid(shp2_finnmark)
 centroid_data9 <- cbind(centroid_data9, st_coordinates(centroid_data9))
 
+# Filter centroid_data9 to include only specific values of KOMMUNENAV
+specific_points9 <- centroid_data9[centroid_data9$KOMMUNENAV %in% c("Alta", "Nordkapp"), ]
+
 # Plot with labels
 finnmark_map <- ggplot() +
   geom_sf(data = shp2_finnmark, color = "gold", size = 0.2, fill = NA) +
@@ -372,7 +394,7 @@ finnmark_map <- ggplot() +
   scale_fill_gradient(low = "green", high = "red") +
   scale_color_gradient(low = "green", high = "red") +  # Adding color scale for points
   ggtitle("Finnmark") +
-  geom_text(data = centroid_data9, aes(label = KOMMUNENAV, x = X, y = Y), size = 3, color = "black") +
+  geom_text(data = specific_points9, aes(label = KOMMUNENAV, x = X, y = Y), size = 3, color = "black") +
   theme_bw() +
   theme(axis.title.x = element_blank(),  # Remove x-axis title
         axis.title.y = element_blank(),  # Remove y-axis title
@@ -391,6 +413,9 @@ intersect3_agder <- intersect3 %>%
 centroid_data10 <- st_centroid(shp2_agder)
 centroid_data10 <- cbind(centroid_data10, st_coordinates(centroid_data10))
 
+# Filter centroid_data10 to include only specific values of KOMMUNENAV
+specific_points10 <- centroid_data10[centroid_data10$KOMMUNENAV %in% c("Kristiansand", "Tvedestrand"), ]
+
 # Plot with labels
 agder_map <- ggplot() +
   geom_sf(data = shp2_agder, color = "gold", size = 0.2, fill = NA) +
@@ -398,7 +423,7 @@ agder_map <- ggplot() +
   scale_fill_gradient(low = "green", high = "red") +
   scale_color_gradient(low = "green", high = "red") +  # Adding color scale for points
   ggtitle("Agder") +
-  geom_text(data = centroid_data10, aes(label = KOMMUNENAV, x = X, y = Y), size = 3, color = "black") +
+  geom_text(data = specific_points10, aes(label = KOMMUNENAV, x = X, y = Y), size = 3, color = "black") +
   theme_bw() +
   theme(axis.title.x = element_blank(),  # Remove x-axis title
         axis.title.y = element_blank(),  # Remove y-axis title
@@ -417,6 +442,9 @@ intersect3_telemark <- intersect3 %>%
 centroid_data11 <- st_centroid(shp2_telemark)
 centroid_data11 <- cbind(centroid_data11, st_coordinates(centroid_data11))
 
+# Filter centroid_data11 to include only specific values of KOMMUNENAV
+specific_points11 <- centroid_data11[centroid_data11$KOMMUNENAV %in% c("Skien", "Krager\u00F8"), ]
+
 # Plot with labels
 telemark_map <- ggplot() +
   geom_sf(data = shp2_telemark, color = "gold", size = 0.2, fill = NA) +
@@ -424,7 +452,7 @@ telemark_map <- ggplot() +
   scale_fill_gradient(low = "green", high = "red") +
   scale_color_gradient(low = "green", high = "red") +  # Adding color scale for points
   ggtitle("Telemark") +
-  geom_text(data = centroid_data11, aes(label = KOMMUNENAV, x = X, y = Y), size = 3, color = "black") +
+  geom_text(data = specific_points11, aes(label = KOMMUNENAV, x = X, y = Y), size = 3, color = "black") +
   theme_bw() +
   theme(axis.title.x = element_blank(),  # Remove x-axis title
         axis.title.y = element_blank(),  # Remove y-axis title
@@ -443,6 +471,9 @@ intersect3_vestfold <- intersect3 %>%
 centroid_data12 <- st_centroid(shp2_vestfold)
 centroid_data12 <- cbind(centroid_data12, st_coordinates(centroid_data12))
 
+# Filter centroid_data12 to include only specific values of KOMMUNENAV
+specific_points12 <- centroid_data12[centroid_data12$KOMMUNENAV %in% c("Sandefjord", "T\u00F8nsberg"), ]
+
 # Plot with labels
 vestfold_map <- ggplot() +
   geom_sf(data = shp2_vestfold, color = "gold", size = 0.2, fill = NA) +
@@ -450,7 +481,7 @@ vestfold_map <- ggplot() +
   scale_fill_gradient(low = "green", high = "red") +
   scale_color_gradient(low = "green", high = "red") +  # Adding color scale for points
   ggtitle("Vestfold") +
-  geom_text(data = centroid_data12, aes(label = KOMMUNENAV, x = X, y = Y), size = 3, color = "black") +
+  geom_text(data = specific_points12, aes(label = KOMMUNENAV, x = X, y = Y), size = 3, color = "black") +
   theme_bw() +
   theme(axis.title.x = element_blank(),  # Remove x-axis title
         axis.title.y = element_blank(),  # Remove y-axis title
@@ -1253,6 +1284,11 @@ print(lob_con_percent)
 
 
 #ADD HOW THE CORAL MPAS ARENT ALL GEOGRAPHICALLY DEFINE AS ACTUAL MPAS
+
+# Notes from 25.04
+# take birds out from the top filtering
+# remake the composite plot
+# update methods
 
 #Notes from 24.04
 # finish running the ratios on the above shps. 
