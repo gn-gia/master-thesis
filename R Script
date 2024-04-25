@@ -13,22 +13,28 @@ install.packages("formattable")
 install.packages("kableExtra")
 install.packages("openxlsx")
 install.packages("units")
-
+install.packages("viridis")
+  
+  
 # Pacakge citations
-citation(package = 'worrms')
-citation("IUCNN")
-citation("dplyr")
-citation("robis")
-citation("sf")
-citation("ggplot2")
-citation("kableExtra")
-citation("stats")
-citation("graphics")
-citation("grDevices")
-citation("utils")
-citation("datasets")
-citation("methods")
-citation("base")
+citations <- c(
+  citation("worrms"),
+  citation("IUCNN"),
+  citation("dplyr"),
+  citation("robis"),
+  citation("sf"),
+  citation("ggplot2"),
+  citation("kableExtra"),
+  citation("stats"),
+  citation("graphics"),
+  citation("grDevices"),
+  citation("utils"),
+  citation("datasets"),
+  citation("methods"),
+  citation("base")
+)
+print(citations)
+
 
 # Occurrence Data: WKT string delimits polygon excluding Svalbard and Jan Mayen; Norway = 179 (Accessed 23.02.2024)
 library("dplyr")
@@ -831,6 +837,7 @@ kable(summary_table, "latex", file = "summary_table.tex")
 #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% STATS FROM GIS LAYERS
 library(ggplot2)
 library(sf)
+library(viridis)
 
 # Read the shp made in ArcGIS Pro to an sf object - kelp reference areas (https://open-data-fiskeridirektoratet-fiskeridir.hub.arcgis.com/datasets/50c3d14959444e77ac6ed6d96308a2bd_0/explore?location=60.485391%2C9.006054%2C6.49)
 tare_shp <- st_read("C:/Users/gngia/OneDrive/Documents/new obis/tare_referense_omr_new.shp", stringsAsFactors=FALSE)
@@ -841,7 +848,7 @@ class(tare_shp)
 ggplot() +
   geom_sf(data = shp) +
   geom_sf(data = shp2) +
-  geom_sf(data = tare_shp, aes(color = "fylke"), size = 0.25) +
+  geom_sf(data = tare_shp, aes(color = fylke), size = 0.25) +
   theme_bw()
 
 unique(tare_shp$fylke)
@@ -850,9 +857,9 @@ unique(tare_shp$fylke)
 # Use the sum of municipality areas summed for each county = sum_areas from above
 # Calculate the proportion of kelp reference areas per county relative to the total area of each county
 tare_ref_omr_ratios <- c(
-  (sum(tare_shp$area[tare_shp$fylke == "M\u00F8re og Romsdal"]) / (sum_areas$Total_Shape_Area[sum_areas$FYLKESNAVN == "\"M\u00F8re og Romsdal\""]*1e-06)*100), # 0.7447074
-  (sum(tare_shp$area[tare_shp$fylke == "Tr\u00F8ndelag"]) / (sum_areas$Total_Shape_Area[sum_areas$FYLKESNAVN == "\"Tr\u00F8ndelag - Tr\u00F6\u00F6ndelage\""]*1e-06)*100), # 0.7913688
-  (sum(tare_shp$area[tare_shp$fylke == "Vestland"]) / (sum_areas$Total_Shape_Area[sum_areas$FYLKESNAVN == "Vestland"]*1e-06)*100), # 0.1713162
+  (sum(tare_shp$area[tare_shp$fylke == "M\u00F8re og Romsdal"]) / (sum_areas$Total_Shape_Area[sum_areas$FYLKESNAVN == "\"M\u00F8re og Romsdal\""]*1e-06)*100), # 0.1713162 
+  (sum(tare_shp$area[tare_shp$fylke == "Tr\u00F8ndelag"]) / (sum_areas$Total_Shape_Area[sum_areas$FYLKESNAVN == "\"Tr\u00F8ndelag - Tr\u00F6\u00F6ndelage\""]*1e-06)*100), # 0.7447074 
+  (sum(tare_shp$area[tare_shp$fylke == "Vestland"]) / (sum_areas$Total_Shape_Area[sum_areas$FYLKESNAVN == "Vestland"]*1e-06)*100), # 0.7913688 
   (sum(tare_shp$area[tare_shp$fylke == "Nordland"]) / (sum_areas$Total_Shape_Area[sum_areas$FYLKESNAVN == "\"Nordland - Nordl\u00E1nnda\""]*1e-06)*100) # 0.3765071
 )
 print(tare_ref_omr_ratios)
@@ -871,7 +878,7 @@ class(tare_hostfelt_shp)
 ggplot() +
   geom_sf(data = shp) +
   geom_sf(data = shp2) +
-  geom_sf(data = tare_hostfelt_shp, aes(color = "fylke"), size = 1) +
+  geom_sf(data = tare_hostfelt_shp, aes(color = fylke), size = 1) +
   theme_bw()
 
 unique(tare_hostfelt_shp$fylke)
@@ -953,9 +960,9 @@ class(koral_vern_omr)
 
 unique(koral_vern_omr$FYLKESNAVN)
 
-# Find the sums of all areas of prohibited fishing areas near corals per county
+# Find the sums of all areas of coral conservation areas per county
 # Use the sum of municipality areas summed for each county = sum_areas from above
-# Calculate the proportion of prohibited fishing areas near corals per county relative to the total area of each county water
+# Calculate the proportion of coral conservation areas per county relative to the total area of each county water
 korall_vernomr_ratios <- c(
   (sum(koral_vern_omr$area[koral_vern_omr$FYLKESNAVN == "\"M\u00F8re og Romsdal\""]) / (sum_areas$Total_Shape_Area[sum_areas$FYLKESNAVN == "\"M\u00F8re og Romsdal\""]*1e-06)*100), # 0.372049970
   (sum(koral_vern_omr$area[koral_vern_omr$FYLKESNAVN == "\u00D8stfold"]) / (sum_areas$Total_Shape_Area[sum_areas$FYLKESNAVN == "\u00D8stfold"]*1e-06)*100), # 1.215242501
@@ -972,110 +979,199 @@ print(korall_vernomr_ratios)
 # korall_rev_vern_omr and Korall_rev_forbudsomr_new actually seem to be the same exact data 
 #except in korall vern they call them Coral MPAs and in forbudsomr they just say you cant fish or drag line through those areas
 
+
+# Read the shp made in ArcGIS Pro to an sf object - WDPA & WDOECM, Norway (https://www.protectedplanet.net/en)
 wdpa_apr <- st_read("C:/Users/gngia/OneDrive/Documents/new obis/wpda_wdoecm_apr.shp", stringsAsFactors=FALSE)
 wdpa_apr <- st_transform(wdpa_apr, crs = "EPSG:4326")
 print(wdpa_apr1 <- st_crs(wdpa_apr)) # area is in sq km
 
+unique(wdpa_apr$FYLKESNAVN)
 
-wdpa_mar <- st_read("C:/Users/gngia/OneDrive/Documents/new obis/wpda_wdoecm_mar.shp", stringsAsFactors=FALSE)
-wdpa_mar <- st_transform(wdpa_mar, crs = "EPSG:4326")
-print(wdpa_mar1 <- st_crs(wdpa_mar)) # area is in sq km
+# Find the sums of all areas of WDPA & WDOECM per county
+# Use the sum of municipality areas summed for each county = sum_areas from above
+# Calculate the proportion of WDPA & WDOECM per county relative to the total area of each county water
+wdpa_apr_ratios <- c(
+  (sum(wdpa_apr$area[wdpa_apr$FYLKESNAVN == "\"M\u00F8re og Romsdal\""]) / (sum_areas$Total_Shape_Area[sum_areas$FYLKESNAVN == "\"M\u00F8re og Romsdal\""]*1e-06)*100), # 4.7017656
+  (sum(wdpa_apr$area[wdpa_apr$FYLKESNAVN == "\u00D8stfold"]) / (sum_areas$Total_Shape_Area[sum_areas$FYLKESNAVN == "\u00D8stfold"]*1e-06)*100), # 37.5175125  
+  (sum(wdpa_apr$area[wdpa_apr$FYLKESNAVN == "\"Troms - Romsa - Tromssa\"" ]) / (sum_areas$Total_Shape_Area[sum_areas$FYLKESNAVN == "\"Troms - Romsa - Tromssa\""]*1e-06)*100), # 2.2904810  
+  (sum(wdpa_apr$area[wdpa_apr$FYLKESNAVN == "\"Nordland - Nordl\u00E1nnda\"" ]) / (sum_areas$Total_Shape_Area[sum_areas$FYLKESNAVN == "\"Nordland - Nordl\u00E1nnda\""]*1e-06)*100), # 2.5926527  
+  (sum(wdpa_apr$area[wdpa_apr$FYLKESNAVN == "\"Finnmark - Finnm\u00E1rku - Finmarkku\""]) / (sum_areas$Total_Shape_Area[sum_areas$FYLKESNAVN == "\"Finnmark - Finnm\u00E1rku - Finmarkku\""]*1e-06)*100), # 0.4752846
+  (sum(wdpa_apr$area[wdpa_apr$FYLKESNAVN == "Rogaland"]) / (sum_areas$Total_Shape_Area[sum_areas$FYLKESNAVN == "Rogaland"]*1e-06)*100), # 2.1562136  
+  (sum(wdpa_apr$area[wdpa_apr$FYLKESNAVN == "Vestland"]) / (sum_areas$Total_Shape_Area[sum_areas$FYLKESNAVN == "Vestland"]*1e-06)*100), # 0.9253383  
+  (sum(wdpa_apr$area[wdpa_apr$FYLKESNAVN == "\"Tr\u00F8ndelag - Tr\u00F6\u00F6ndelage\""]) / (sum_areas$Total_Shape_Area[sum_areas$FYLKESNAVN == "\"Tr\u00F8ndelag - Tr\u00F6\u00F6ndelage\""]*1e-06)*100), # 2.3766661  
+  (sum(wdpa_apr$area[wdpa_apr$FYLKESNAVN == "Agder"]) / (sum_areas$Total_Shape_Area[sum_areas$FYLKESNAVN == "Agder"]*1e-06)*100), # 10.77184 
+  (sum(wdpa_apr$area[wdpa_apr$FYLKESNAVN == "Akershus"]) / (sum_areas$Total_Shape_Area[sum_areas$FYLKESNAVN == "Akershus"]*1e-06)*100), # 2.5761293 
+  (sum(wdpa_apr$area[wdpa_apr$FYLKESNAVN == "Telemark"]) / (sum_areas$Total_Shape_Area[sum_areas$FYLKESNAVN == "Telemark"]*1e-06)*100), # 0.2093967
+  (sum(wdpa_apr$area[wdpa_apr$FYLKESNAVN == "Vestfold"]) / (sum_areas$Total_Shape_Area[sum_areas$FYLKESNAVN == "Vestfold"]*1e-06)*100), # 0.368252 
+  (sum(wdpa_apr$area[wdpa_apr$FYLKESNAVN == "Oslo"]) / (sum_areas$Total_Shape_Area[sum_areas$FYLKESNAVN == "Oslo"]*1e-06)*100), # 7.818589
+  (sum(wdpa_apr$area[wdpa_apr$FYLKESNAVN == "Buskerud"]) / (sum_areas$Total_Shape_Area[sum_areas$FYLKESNAVN == "Buskerud"]*1e-06)*100) # 6.121036
+)
+print(wdpa_apr_ratios)
 
+# Determine the number of unique levels in the IUCN_CAT variable
+num_levels <- nlevels(factor(wdpa_apr$IUCN_CAT))
+# Generate colors from the Viridis palette, adding one extra color
+colors <- viridis_pal(num_levels + 1)(num_levels)
+# Create the plot
+ggplot() +
+  geom_sf(data = shp2) +
+  geom_sf(data = wdpa_apr, aes(color = IUCN_CAT), size = 5) +
+  scale_color_manual(values = colors) +  # Set colors manually
+  guides(color = guide_legend(override.aes = list(alpha = 1))) +
+  theme_bw()
 
+# Read the shp made in ArcGIS Pro to an sf object - SVO (https://kartkatalog.miljodirektoratet.no/Dataset/Details/702)
 svo <- st_read("C:/Users/gngia/OneDrive/Documents/new obis/svo.shp", stringsAsFactors=FALSE)
 svo <- st_transform(svo, crs = "EPSG:4326")
 print(svo1 <- st_crs(svo)) # area is in sq km
 
+unique(svo$FYLKESNAVN)
 
+# Find the sums of all areas of SVO per county
+# Use the sum of municipality areas summed for each county = sum_areas from above
+# Calculate the proportion of SVO per county relative to the total area of each county water
+svo_ratios <- c(
+  (sum(svo$area[svo$FYLKESNAVN == "\"M\u00F8re og Romsdal\""]) / (sum_areas$Total_Shape_Area[sum_areas$FYLKESNAVN == "\"M\u00F8re og Romsdal\""]*1e-06)*100), # 73.4780405 
+  (sum(svo$area[svo$FYLKESNAVN == "\u00D8stfold"]) / (sum_areas$Total_Shape_Area[sum_areas$FYLKESNAVN == "\u00D8stfold"]*1e-06)*100), # 63.3842406   
+  (sum(svo$area[svo$FYLKESNAVN == "\"Troms - Romsa - Tromssa\"" ]) / (sum_areas$Total_Shape_Area[sum_areas$FYLKESNAVN == "\"Troms - Romsa - Tromssa\""]*1e-06)*100), # 58.7215246   
+  (sum(svo$area[svo$FYLKESNAVN == "\"Nordland - Nordl\u00E1nnda\"" ]) / (sum_areas$Total_Shape_Area[sum_areas$FYLKESNAVN == "\"Nordland - Nordl\u00E1nnda\""]*1e-06)*100), # 68.4876118   
+  (sum(svo$area[svo$FYLKESNAVN == "\"Finnmark - Finnm\u00E1rku - Finmarkku\""]) / (sum_areas$Total_Shape_Area[sum_areas$FYLKESNAVN == "\"Finnmark - Finnm\u00E1rku - Finmarkku\""]*1e-06)*100), # 53.5008102
+  (sum(svo$area[svo$FYLKESNAVN == "Rogaland"]) / (sum_areas$Total_Shape_Area[sum_areas$FYLKESNAVN == "Rogaland"]*1e-06)*100), # 33.7564396   
+  (sum(svo$area[svo$FYLKESNAVN == "Vestland"]) / (sum_areas$Total_Shape_Area[sum_areas$FYLKESNAVN == "Vestland"]*1e-06)*100), # 18.2648541   
+  (sum(svo$area[svo$FYLKESNAVN == "\"Tr\u00F8ndelag - Tr\u00F6\u00F6ndelage\""]) / (sum_areas$Total_Shape_Area[sum_areas$FYLKESNAVN == "\"Tr\u00F8ndelag - Tr\u00F6\u00F6ndelage\""]*1e-06)*100), # 41.5677366   
+  (sum(svo$area[svo$FYLKESNAVN == "Agder"]) / (sum_areas$Total_Shape_Area[sum_areas$FYLKESNAVN == "Agder"]*1e-06)*100), # 22.2974374   
+  (sum(svo$area[svo$FYLKESNAVN == "Telemark"]) / (sum_areas$Total_Shape_Area[sum_areas$FYLKESNAVN == "Telemark"]*1e-06)*100), # 0.1925922
+  (sum(svo$area[svo$FYLKESNAVN == "Vestfold"]) / (sum_areas$Total_Shape_Area[sum_areas$FYLKESNAVN == "Vestfold"]*1e-06)*100) # 53.6597639 
+)
+print(svo_ratios)
+
+# Read the shp made in ArcGIS Pro to an sf object - OSPAR Interactive Map Tool data (https://carto.mpa.ospar.org/en/1/ospar.map)
 carto_mpa <- st_read("C:/Users/gngia/OneDrive/Documents/new obis/carto_mpa.shp", stringsAsFactors=FALSE)
 carto_mpa <- st_transform(carto_mpa, crs = "EPSG:4326")
 print(carto_mpa1 <- st_crs(carto_mpa)) # area is in sq km
 
+unique(carto_mpa$FYLKESNAVN)
 
-ospar_mpa <- st_read("C:/Users/gngia/OneDrive/Documents/new obis/ospar_mpa.shp", stringsAsFactors=FALSE)
+# Find the sums of all areas of SVO per county
+# Use the sum of municipality areas summed for each county = sum_areas from above
+# Calculate the proportion of SVO per county relative to the total area of each county water
+carto_mpa_ratios <- c(
+  (sum(carto_mpa$area[carto_mpa$FYLKESNAVN == "\"M\u00F8re og Romsdal\""]) / (sum_areas$Total_Shape_Area[sum_areas$FYLKESNAVN == "\"M\u00F8re og Romsdal\""]*1e-06)*100), # 0.3720752  
+  (sum(carto_mpa$area[carto_mpa$FYLKESNAVN == "\u00D8stfold"]) / (sum_areas$Total_Shape_Area[sum_areas$FYLKESNAVN == "\u00D8stfold"]*1e-06)*100), # 35.9828636     
+  (sum(carto_mpa$area[carto_mpa$FYLKESNAVN == "\"Troms - Romsa - Tromssa\"" ]) / (sum_areas$Total_Shape_Area[sum_areas$FYLKESNAVN == "\"Troms - Romsa - Tromssa\""]*1e-06)*100), # 2.5794776     
+  (sum(carto_mpa$area[carto_mpa$FYLKESNAVN == "\"Nordland - Nordl\u00E1nnda\"" ]) / (sum_areas$Total_Shape_Area[sum_areas$FYLKESNAVN == "\"Nordland - Nordl\u00E1nnda\""]*1e-06)*100), # 0.6461315     
+  (sum(carto_mpa$area[carto_mpa$FYLKESNAVN == "\"Finnmark - Finnm\u00E1rku - Finmarkku\""]) / (sum_areas$Total_Shape_Area[sum_areas$FYLKESNAVN == "\"Finnmark - Finnm\u00E1rku - Finmarkku\""]*1e-06)*100), # 4.9742430
+  (sum(carto_mpa$area[carto_mpa$FYLKESNAVN == "Rogaland"]) / (sum_areas$Total_Shape_Area[sum_areas$FYLKESNAVN == "Rogaland"]*1e-06)*100), # 1.8524839     
+  (sum(carto_mpa$area[carto_mpa$FYLKESNAVN == "Vestland"]) / (sum_areas$Total_Shape_Area[sum_areas$FYLKESNAVN == "Vestland"]*1e-06)*100), # 0.3454916     
+  (sum(carto_mpa$area[carto_mpa$FYLKESNAVN == "\"Tr\u00F8ndelag - Tr\u00F6\u00F6ndelage\""]) / (sum_areas$Total_Shape_Area[sum_areas$FYLKESNAVN == "\"Tr\u00F8ndelag - Tr\u00F6\u00F6ndelage\""]*1e-06)*100), # 0.5081613     
+  (sum(carto_mpa$area[carto_mpa$FYLKESNAVN == "Agder"]) / (sum_areas$Total_Shape_Area[sum_areas$FYLKESNAVN == "Agder"]*1e-06)*100), # 8.8395135    
+  (sum(carto_mpa$area[carto_mpa$FYLKESNAVN == "Telemark"]) / (sum_areas$Total_Shape_Area[sum_areas$FYLKESNAVN == "Telemark"]*1e-06)*100), # 12.4346427
+  (sum(carto_mpa$area[carto_mpa$FYLKESNAVN == "Vestfold"]) / (sum_areas$Total_Shape_Area[sum_areas$FYLKESNAVN == "Vestfold"]*1e-06)*100) # 17.4952050 
+)
+print(carto_mpa_ratios)
+
+
+# Read the shp made in ArcGIS Pro to an sf object - ODIMS 2021 data (https://odims.ospar.org/en/submissions/ospar_mpa_2021_07/)
+ospar_mpa <- st_read("C:/Users/gngia/OneDrive/Documents/new obis/ospar_mpa_new.shp", stringsAsFactors=FALSE)
 ospar_mpa <- st_transform(ospar_mpa, crs = "EPSG:4326")
 print(ospar_mpa1 <- st_crs(ospar_mpa)) # area is in sq km
 
+unique(ospar_mpa$FYLKESNAVN)
 
+# Find the sums of all areas of SVO per county
+# Use the sum of municipality areas summed for each county = sum_areas from above
+# Calculate the proportion of SVO per county relative to the total area of each county water
+ospar_mpa_ratios <- c(
+  (sum(ospar_mpa$area[ospar_mpa$FYLKESNAVN == "\"M\u00F8re og Romsdal\""]) / (sum_areas$Total_Shape_Area[sum_areas$FYLKESNAVN == "\"M\u00F8re og Romsdal\""]*1e-06)*100), # 0.37207520    
+  (sum(ospar_mpa$area[ospar_mpa$FYLKESNAVN == "\u00D8stfold"]) / (sum_areas$Total_Shape_Area[sum_areas$FYLKESNAVN == "\u00D8stfold"]*1e-06)*100), # 35.98286348        
+  (sum(ospar_mpa$area[ospar_mpa$FYLKESNAVN == "\"Nordland - Nordl\u00E1nnda\"" ]) / (sum_areas$Total_Shape_Area[sum_areas$FYLKESNAVN == "\"Nordland - Nordl\u00E1nnda\""]*1e-06)*100), # 0.05034488        
+  (sum(ospar_mpa$area[ospar_mpa$FYLKESNAVN == "\"Finnmark - Finnm\u00E1rku - Finmarkku\""]) / (sum_areas$Total_Shape_Area[sum_areas$FYLKESNAVN == "\"Finnmark - Finnm\u00E1rku - Finmarkku\""]*1e-06)*100), # 0.01431218  
+  (sum(ospar_mpa$area[ospar_mpa$FYLKESNAVN == "Rogaland"]) / (sum_areas$Total_Shape_Area[sum_areas$FYLKESNAVN == "Rogaland"]*1e-06)*100), # 1.85248395      
+  (sum(ospar_mpa$area[ospar_mpa$FYLKESNAVN == "\"Tr\u00F8ndelag - Tr\u00F6\u00F6ndelage\""]) / (sum_areas$Total_Shape_Area[sum_areas$FYLKESNAVN == "\"Tr\u00F8ndelag - Tr\u00F6\u00F6ndelage\""]*1e-06)*100), # 0.40943903        
+  (sum(ospar_mpa$area[ospar_mpa$FYLKESNAVN == "Agder"]) / (sum_areas$Total_Shape_Area[sum_areas$FYLKESNAVN == "Agder"]*1e-06)*100), # 8.83951350       
+  (sum(ospar_mpa$area[ospar_mpa$FYLKESNAVN == "Telemark"]) / (sum_areas$Total_Shape_Area[sum_areas$FYLKESNAVN == "Telemark"]*1e-06)*100), # 12.43464272 
+  (sum(ospar_mpa$area[ospar_mpa$FYLKESNAVN == "Vestfold"]) / (sum_areas$Total_Shape_Area[sum_areas$FYLKESNAVN == "Vestfold"]*1e-06)*100) # 17.49520502 
+)
+print(ospar_mpa_ratios)
+
+# Read the shp made in ArcGIS Pro to an sf object - Naturvernområder (https://karteksport.miljodirektoratet.no/)
 naturvernomr <- st_read("C:/Users/gngia/OneDrive/Documents/new obis/naturvernomr.shp", stringsAsFactors=FALSE)
 naturvernomr <- st_transform(naturvernomr, crs = "EPSG:4326")
 print(naturvernomr1 <- st_crs(naturvernomr)) # area is in sq km
 
-# MIGHT HAVE TO FIX A UNICODE THING IN THIS ONE ^^^
+#Changing column names that did not translate to the encoding properly
+names(naturvernomr)[names(naturvernomr) == "skj.U.00F8.tselp"] <- "skj\u00F8tselplan"
+names(naturvernomr)[names(naturvernomr) == "f.U.00F8.rstegan"] <- "f\u00F8rstegangVernet"
 
+unique(naturvernomr$FYLKESNAVN)
+
+# Find the sums of all areas of nature conservation areas per county
+# Use the sum of municipality areas summed for each county = sum_areas from above
+# Calculate the proportion of nature conservation per county relative to the total area of each county water
+naturvernomr_ratios <- c(
+  (sum(naturvernomr$area[naturvernomr$FYLKESNAVN == "\"M\u00F8re og Romsdal\""]) / (sum_areas$Total_Shape_Area[sum_areas$FYLKESNAVN == "\"M\u00F8re og Romsdal\""]*1e-06)*100), # 4.716314 
+  (sum(naturvernomr$area[naturvernomr$FYLKESNAVN == "\u00D8stfold"]) / (sum_areas$Total_Shape_Area[sum_areas$FYLKESNAVN == "\u00D8stfold"]*1e-06)*100), # 43.947853    
+  (sum(naturvernomr$area[naturvernomr$FYLKESNAVN == "\"Troms - Romsa - Tromssa\"" ]) / (sum_areas$Total_Shape_Area[sum_areas$FYLKESNAVN == "\"Troms - Romsa - Tromssa\""]*1e-06)*100), # 5.008229    
+  (sum(naturvernomr$area[naturvernomr$FYLKESNAVN == "\"Nordland - Nordl\u00E1nnda\"" ]) / (sum_areas$Total_Shape_Area[sum_areas$FYLKESNAVN == "\"Nordland - Nordl\u00E1nnda\""]*1e-06)*100), # 3.498783    
+  (sum(naturvernomr$area[naturvernomr$FYLKESNAVN == "\"Finnmark - Finnm\u00E1rku - Finmarkku\""]) / (sum_areas$Total_Shape_Area[sum_areas$FYLKESNAVN == "\"Finnmark - Finnm\u00E1rku - Finmarkku\""]*1e-06)*100), # 5.566015  
+  (sum(naturvernomr$area[naturvernomr$FYLKESNAVN == "Rogaland"]) / (sum_areas$Total_Shape_Area[sum_areas$FYLKESNAVN == "Rogaland"]*1e-06)*100), # 5.431686  
+  (sum(naturvernomr$area[naturvernomr$FYLKESNAVN == "Vestland"]) / (sum_areas$Total_Shape_Area[sum_areas$FYLKESNAVN == "Vestland"]*1e-06)*100), # 1.631439    
+  (sum(naturvernomr$area[naturvernomr$FYLKESNAVN == "\"Tr\u00F8ndelag - Tr\u00F6\u00F6ndelage\""]) / (sum_areas$Total_Shape_Area[sum_areas$FYLKESNAVN == "\"Tr\u00F8ndelag - Tr\u00F6\u00F6ndelage\""]*1e-06)*100), # 6.079442   
+  (sum(naturvernomr$area[naturvernomr$FYLKESNAVN == "Agder"]) / (sum_areas$Total_Shape_Area[sum_areas$FYLKESNAVN == "Agder"]*1e-06)*100), # 10.951922   
+  (sum(naturvernomr$area[naturvernomr$FYLKESNAVN == "Akershus"]) / (sum_areas$Total_Shape_Area[sum_areas$FYLKESNAVN == "Akershus"]*1e-06)*100), # 1.012029  
+  (sum(naturvernomr$area[naturvernomr$FYLKESNAVN == "Telemark"]) / (sum_areas$Total_Shape_Area[sum_areas$FYLKESNAVN == "Telemark"]*1e-06)*100), # 12.579167 
+  (sum(naturvernomr$area[naturvernomr$FYLKESNAVN == "Vestfold"]) / (sum_areas$Total_Shape_Area[sum_areas$FYLKESNAVN == "Vestfold"]*1e-06)*100), # 18.159375 
+  (sum(naturvernomr$area[naturvernomr$FYLKESNAVN == "Oslo"]) / (sum_areas$Total_Shape_Area[sum_areas$FYLKESNAVN == "Oslo"]*1e-06)*100), # 6.810401  
+  (sum(naturvernomr$area[naturvernomr$FYLKESNAVN == "Buskerud"]) / (sum_areas$Total_Shape_Area[sum_areas$FYLKESNAVN == "Buskerud"]*1e-06)*100) # 6.121035
+  )
+print(naturvernomr_ratios)
+
+# Read the shp made in ArcGIS Pro to an sf object - KBAs (www.birdlife.org)
 kba <- st_read("C:/Users/gngia/OneDrive/Documents/new obis/kba.shp", stringsAsFactors=FALSE)
 kba <- st_transform(kba, crs = "EPSG:4326")
 print(kba1 <- st_crs(kba)) # area is in sq km
 
+unique(kba$FYLKESNAVN)
 
+# Find the sums of all areas of KBAs per county
+# Use the sum of municipality areas summed for each county = sum_areas from above
+# Calculate the proportion of KBAs per county relative to the total area of each county water
+kba_ratios <- c(
+  (sum(kba$area[kba$FYLKESNAVN == "\"M\u00F8re og Romsdal\""]) / (sum_areas$Total_Shape_Area[sum_areas$FYLKESNAVN == "\"M\u00F8re og Romsdal\""]*1e-06)*100), # 4.71686754  
+  (sum(kba$area[kba$FYLKESNAVN == "\u00D8stfold"]) / (sum_areas$Total_Shape_Area[sum_areas$FYLKESNAVN == "\u00D8stfold"]*1e-06)*100), # 1.46388072     
+  (sum(kba$area[kba$FYLKESNAVN == "\"Troms - Romsa - Tromssa\"" ]) / (sum_areas$Total_Shape_Area[sum_areas$FYLKESNAVN == "\"Troms - Romsa - Tromssa\""]*1e-06)*100), # 0.68690089     
+  (sum(kba$area[kba$FYLKESNAVN == "\"Nordland - Nordl\u00E1nnda\"" ]) / (sum_areas$Total_Shape_Area[sum_areas$FYLKESNAVN == "\"Nordland - Nordl\u00E1nnda\""]*1e-06)*100), # 2.34074604     
+  (sum(kba$area[kba$FYLKESNAVN == "\"Finnmark - Finnm\u00E1rku - Finmarkku\""]) / (sum_areas$Total_Shape_Area[sum_areas$FYLKESNAVN == "\"Finnmark - Finnm\u00E1rku - Finmarkku\""]*1e-06)*100), # 4.73011768  
+  (sum(kba$area[kba$FYLKESNAVN == "Rogaland"]) / (sum_areas$Total_Shape_Area[sum_areas$FYLKESNAVN == "Rogaland"]*1e-06)*100), # 2.34715764   
+  (sum(kba$area[kba$FYLKESNAVN == "\"Tr\u00F8ndelag - Tr\u00F6\u00F6ndelage\""]) / (sum_areas$Total_Shape_Area[sum_areas$FYLKESNAVN == "\"Tr\u00F8ndelag - Tr\u00F6\u00F6ndelage\""]*1e-06)*100), # 5.24032193    
+  (sum(kba$area[kba$FYLKESNAVN == "Agder"]) / (sum_areas$Total_Shape_Area[sum_areas$FYLKESNAVN == "Agder"]*1e-06)*100), # 0.50188690    
+  (sum(kba$area[kba$FYLKESNAVN == "Vestfold"]) / (sum_areas$Total_Shape_Area[sum_areas$FYLKESNAVN == "Vestfold"]*1e-06)*100) # 0.04011559 
+)
+print(kba_ratios)
+
+
+# Read the shp made in ArcGIS Pro to an sf object - Ramsar areas (https://https://karteksport.miljodirektoratet.no/)
 ramsar <- st_read("C:/Users/gngia/OneDrive/Documents/new obis/ramsar.shp", stringsAsFactors=FALSE)
 ramsar <- st_transform(ramsar, crs = "EPSG:4326")
 print(ramsar1 <- st_crs(ramsar)) # area is in sq km
 
-# MIGHT HAVE TO FIX A UNICODE THING IN THIS ONE TOO ^^^
+#Changing column names that did not translate to the encoding properly
+names(ramsar)[names(ramsar) == "omr.U.00E5.deBes"] <- "omr\u00E5deBeskrivelse"
 
+unique(ramsar$FYLKESNAVN)
 
-
-#Notes from 24.04
-# finish running the ratios on the above shps. 
-# write methods and add all of the stuff from 23.04 and 24.04 to results
-# intro + move stuff to word ?
-
-
-
-# Notes from 23.04 
-#got the two kelp shps in and can use area_sqkm to calc % coverage per county.
-#do the same with IBA, KBA, SVO, MPA, Coral MPA, etc.
-
-
-#i can sum all the areas for each county in tare shps and then divide those by the total shape area in areasqkm
-
-######################### Checks & Notes ##################################
-sum(map_occ_joined_clip2$occurrences) #910 008 
-sum(intersect3$occurrences) #380 104  with 0 in class == Aves
-sum(areas$occurrences) #380 104
-sum(by_county_occ_sum$occurrences) #380 104
-
-sum(
-  (intersect3_finnmark$occurrences),
-  (intersect3_moere$occurrences),
-  (intersect3_nordland$occurrences),
-  (intersect3_troms$occurrences),
-  (intersect3_troendelag$occurrences),
-  (intersect3_agder$occurrences),
-  (intersect3_akershus$occurrences),
-  (intersect3_buskerud$occurrences),
-  (intersect3_oslo$occurrences), 
-  (intersect3_rogaland$occurrences),
-  (intersect3_telemark$occurrences),
-  (intersect3_vestfold$occurrences),
-  (intersect3_vestland$occurrences),
-  (intersect3_oestfold$occurrences)
-) #380 104
-
-sum(summary_table$Total_Occurrences.occurrences) #380 104
-
-(3535.2188/ 11992319367)*100
-(514.1488 / (18672331023 + 11992319367))*100
-(8652.7844 /18672331023)*100
-----------------------------------------------------------
-any(is.na(intersect3$FYLKESNAVN))
-any(is.na(intersect3$occurrences))
-indices_with_na <- which(colSums(is.na(intersect3)) > 0)
-print(indices_with_na)
-
-
-any(is.na(intersect3$aphiaID)) #False
-any(is.na(class_taxa$scientificname)) #False
-any(is.na(occ_sf$class)) # True
-any(is.na(occ_sf$phylum)) #True
-any(is.na(occ_sf$genus)) #True 
-any(is.na(map_occ_joined_clip1$originalScientificName))  #False
-
-any(is.na(intersect3$phylum))
-
-
-
-# notes from EOD 08.04.2024 
-#find better habitat data and also look at the points data in Pro that i opened today. 
-#figure out how to scale the composite map better and also improve the aesthetics of it ; it looks better but not there yet
+# Find the sums of all areas of Ramsar areas per county
+# Use the sum of municipality areas summed for each county = sum_areas from above
+# Calculate the proportion of Ramsar areas per county relative to the total area of each county water
+ramsar_ratios <- c(
+  (sum(ramsar$area[ramsar$FYLKESNAVN == "\"M\u00F8re og Romsdal\""]) / (sum_areas$Total_Shape_Area[sum_areas$FYLKESNAVN == "\"M\u00F8re og Romsdal\""]*1e-06)*100), # 0.05843156   
+  (sum(ramsar$area[ramsar$FYLKESNAVN == "\u00D8stfold"]) / (sum_areas$Total_Shape_Area[sum_areas$FYLKESNAVN == "\u00D8stfold"]*1e-06)*100), # 1.67994723      
+  (sum(ramsar$area[ramsar$FYLKESNAVN == "\"Troms - Romsa - Tromssa\"" ]) / (sum_areas$Total_Shape_Area[sum_areas$FYLKESNAVN == "\"Troms - Romsa - Tromssa\""]*1e-06)*100), # 0.17569259      
+  (sum(ramsar$area[ramsar$FYLKESNAVN == "\"Nordland - Nordl\u00E1nnda\"" ]) / (sum_areas$Total_Shape_Area[sum_areas$FYLKESNAVN == "\"Nordland - Nordl\u00E1nnda\""]*1e-06)*100), # 0.85877814      
+  (sum(ramsar$area[ramsar$FYLKESNAVN == "\"Finnmark - Finnm\u00E1rku - Finmarkku\""]) / (sum_areas$Total_Shape_Area[sum_areas$FYLKESNAVN == "\"Finnmark - Finnm\u00E1rku - Finmarkku\""]*1e-06)*100), # 0.18524557   
+  (sum(ramsar$area[ramsar$FYLKESNAVN == "Rogaland"]) / (sum_areas$Total_Shape_Area[sum_areas$FYLKESNAVN == "Rogaland"]*1e-06)*100), # 1.53905531   
+  (sum(ramsar$area[ramsar$FYLKESNAVN == "\"Tr\u00F8ndelag - Tr\u00F6\u00F6ndelage\""]) / (sum_areas$Total_Shape_Area[sum_areas$FYLKESNAVN == "\"Tr\u00F8ndelag - Tr\u00F6\u00F6ndelage\""]*1e-06)*100), # 3.82138631     
+  (sum(ramsar$area[ramsar$FYLKESNAVN == "Agder"]) / (sum_areas$Total_Shape_Area[sum_areas$FYLKESNAVN == "Agder"]*1e-06)*100), # 0.05057133     
+  (sum(ramsar$area[ramsar$FYLKESNAVN == "Vestfold"]) / (sum_areas$Total_Shape_Area[sum_areas$FYLKESNAVN == "Vestfold"]*1e-06)*100) # 0.03360105 
+)
+print(ramsar_ratios)
