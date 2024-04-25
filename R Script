@@ -555,22 +555,21 @@ all_county_maps <- all_county_maps +
 print(all_county_maps)
 
 #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%5
-
 library(ggplot2)
 library(gridExtra)
+library(patchwork)
 
 # Define the size of each map
-# Define the size of each map
-map_width <- 4
-map_height <- 4
+map_width <- 5
+map_height <- 5
 
 # List of all county names
 county_names <- c("Finnmark", "Troms", "Nordland", "Trøndelag", "Møre og Romsdal", "Vestland", 
                   "Rogaland", "Agder", "Telemark", "Buskerud", "Vestfold", "Akershus", 
                   "Oslo", "Østfold")
 
-# Define the layout for the composite plot
-layout_matrix <- matrix(1:length(county_names), nrow = 2, byrow = TRUE)
+# Define the layout for the composite plot (2 columns, 7 rows)
+layout_matrix <- matrix(1:(2*7), nrow = 7, byrow = TRUE)
 
 # Generate individual map plots and store them in the list
 map_plots <- list()
@@ -588,7 +587,7 @@ for (i in 1:length(county_names)) {
   map_plots[[i]] <- county_plot
 }
 
-# Combine individual map plots into a composite plot
+# Combine individual map plots into a composite plot using patchwork
 composite_plot <- NULL
 for (i in 1:length(county_names)) {
   if (is.null(composite_plot)) {
@@ -600,11 +599,12 @@ for (i in 1:length(county_names)) {
 
 # Add overall title and subtitle to the composite plot
 composite_plot <- composite_plot +
-  ggplot2::labs(title = "Composite Map of Norwegian Counties" +
-  theme(plot.title = element_text(hjust = 0.5)))  # Center the title
+  ggplot2::labs(title = "Composite Map of Norwegian Counties") +
+  theme(plot.title = element_text(hjust = 0.5))  # Center the title
 
-# Print the composite plot
-print(composite_plot)
+# Print the composite plot with the specified layout
+composite_plot
+
 
 #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% WoRMS
 library(worrms) # (https://www.marinespecies.org/)
@@ -739,7 +739,7 @@ intersect3_no_na <- intersect3[, !names(intersect3) %in% c("REF")]
 rows_with_na <- nrow(intersect3) - nrow(intersect3_no_na)
 print(rows_with_na)
 
-#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% SUMMARIZE OCC AND SUMMARY TABLE
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% SUMMARIZE OCCURRENCES
 
 # Count the number of occurrences of each species within each county
 #group_sum <- map_occ_joined_clip1 %>%
@@ -1220,8 +1220,34 @@ ramsar_percent <- c(0.05843156, 1.67994723, 0.17569259 ,0.85877814, 0.18524557, 
 ramsar_percent <- paste0(round(ramsar_percent, 2), "%")
 print(ramsar_percent)
 
+# Read the shp made in ArcGIS Pro to an sf object - lobster conservation zones (https://open-data-fiskeridirektoratet-fiskeridir.hub.arcgis.com/datasets/d46c75e3832845eb8058c5c1c9f34847_9/explore?location=59.842953%2C14.398378%2C5.39)
+lob_con <- st_read("C:/Users/gngia/OneDrive/Documents/new obis/hummer_fredningsoner.shp", stringsAsFactors=FALSE)
+lob_con <- st_transform(lob_con, crs = "EPSG:4326")
+print(lob_con1 <- st_crs(lob_con)) # area is in sq km
 
-# WANT A DIFFERENT HUMMER LAYER 
+unique(lob_con$FYLKESNAVN)
+
+# Find the sums of all areas of  lobster conservation zones per county
+# Use the sum of municipality areas summed for each county = sum_areas from above
+# Calculate the proportion of lobster conservation per county relative to the total area of each county water
+lob_con_ratios <- c(
+  (sum(lob_con$area[lob_con$FYLKESNAVN == "Agder"]) / (sum_areas$Total_Shape_Area[sum_areas$FYLKESNAVN == "Agder"]*1e-06)*100), # 0.05057133   
+  (sum(lob_con$area[lob_con$FYLKESNAVN == "Akershus"]) / (sum_areas$Total_Shape_Area[sum_areas$FYLKESNAVN == "Akershus"]*1e-06)*100), # 0.05057133     
+  (sum(lob_con$area[lob_con$FYLKESNAVN == "\"Nordland - Nordl\u00E1nnda\"" ]) / (sum_areas$Total_Shape_Area[sum_areas$FYLKESNAVN == "\"Nordland - Nordl\u00E1nnda\""]*1e-06)*100), # 0.85877814
+  (sum(lob_con$area[lob_con$FYLKESNAVN == "Oslo" ]) / (sum_areas$Total_Shape_Area[sum_areas$FYLKESNAVN == "Oslo"]*1e-06)*100), # 0.85877814      
+  (sum(lob_con$area[lob_con$FYLKESNAVN == "Rogaland"]) / (sum_areas$Total_Shape_Area[sum_areas$FYLKESNAVN == "Rogaland"]*1e-06)*100), # 1.53905531   
+  (sum(lob_con$area[lob_con$FYLKESNAVN == "Telemark"]) / (sum_areas$Total_Shape_Area[sum_areas$FYLKESNAVN == "Telemark"]*1e-06)*100), # 3.82138631     
+  (sum(lob_con$area[lob_con$FYLKESNAVN == "Vestfold"]) / (sum_areas$Total_Shape_Area[sum_areas$FYLKESNAVN == "Vestfold"]*1e-06)*100), # 0.03360105 
+  (sum(lob_con$area[lob_con$FYLKESNAVN == "Vestland" ]) / (sum_areas$Total_Shape_Area[sum_areas$FYLKESNAVN == "Vestland"]*1e-06)*100), # 0.85877814      
+  (sum(lob_con$area[lob_con$FYLKESNAVN == "\u00D8stfold"]) / (sum_areas$Total_Shape_Area[sum_areas$FYLKESNAVN == "\u00D8stfold"]*1e-06)*100) # 1.67994723      
+)
+print(lob_con_ratios)
+
+# Make output into percentages
+lob_con_percent <- c(0.07721415,  3.08883530,  0.00864787, 28.67519468 , 0.49820126,  0.35300533, 1.37768073 , 0.07832196  ,2.22179824)
+lob_con_percent <- paste0(round(lob_con_percent, 2), "%")
+print(lob_con_percent)
+
 
 ######################### Checks & Notes ##################################
 
