@@ -952,6 +952,11 @@ korall_id_ratios <- c(
 )
 print(korall_id_ratios)
 
+# Make output into percentages
+korall_id_percent <- c(0.01419937, 1.20670438, 0.10477064)
+korall_id_percent <- paste0(round(korall_id_percent, 2), "%")
+print(korall_id_percent)
+
 # Read the shp made in ArcGIS Pro to an sf object - Coral MPA / Coral conservation areas (https://kart.hi.no/mareano/web/wicket/bookmarkable/org.geoserver.web.demo.MapPreviewPage?0&filter=false)
 koral_vern_omr <- st_read("C:/Users/gngia/OneDrive/Documents/new obis/korall_rev_vern_omr.shp", stringsAsFactors=FALSE)
 koral_vern_omr <- st_transform(koral_vern_omr, crs = "EPSG:4326")
@@ -979,6 +984,10 @@ print(korall_vernomr_ratios)
 # korall_rev_vern_omr and Korall_rev_forbudsomr_new actually seem to be the same exact data 
 #except in korall vern they call them Coral MPAs and in forbudsomr they just say you cant fish or drag line through those areas
 
+# Make output into percentages
+korall_vernomr_percent <- c(0.372049971, 1.214478719, 0.281538204,0.267002357, 0.014312180, 0.001301746, 0.003860721, 0.052212350)
+korall_vernomr_percent <- paste0(round(korall_vernomr_percent, 2), "%")
+print(korall_vernomr_percent)
 
 # Read the shp made in ArcGIS Pro to an sf object - WDPA & WDOECM, Norway (https://www.protectedplanet.net/en)
 wdpa_apr <- st_read("C:/Users/gngia/OneDrive/Documents/new obis/wpda_wdoecm_apr.shp", stringsAsFactors=FALSE)
@@ -1007,6 +1016,11 @@ wdpa_apr_ratios <- c(
   (sum(wdpa_apr$area[wdpa_apr$FYLKESNAVN == "Buskerud"]) / (sum_areas$Total_Shape_Area[sum_areas$FYLKESNAVN == "Buskerud"]*1e-06)*100) # 6.121036
 )
 print(wdpa_apr_ratios)
+
+# Make output into percentages
+wdpa_percent <- c(4.7017656, 37.5175125,  2.2904810,  2.5926527,0.4752846,  2.1562136,  0.9253383,  2.3766661,10.7718386 , 2.5761293 , 0.2093967  ,0.3682520,7.8185892,  6.1210359)
+wdpa_percent <- paste0(round(wdpa_percent, 2), "%")
+print(wdpa_percent)
 
 # Determine the number of unique levels in the IUCN_CAT variable
 num_levels <- nlevels(factor(wdpa_apr$IUCN_CAT))
@@ -1045,6 +1059,11 @@ svo_ratios <- c(
 )
 print(svo_ratios)
 
+# Make output into percentages
+svo_percent <- c(73.4780405, 63.3842406, 58.7215246, 68.4876118,53.5008102, 33.7564396, 18.2648541 ,41.5677366, 22.2974374  ,0.1925922, 53.6597639)
+svo_percent <- paste0(round(svo_percent, 2), "%")
+print(svo_percent)
+
 # Read the shp made in ArcGIS Pro to an sf object - OSPAR Interactive Map Tool data (https://carto.mpa.ospar.org/en/1/ospar.map)
 carto_mpa <- st_read("C:/Users/gngia/OneDrive/Documents/new obis/carto_mpa.shp", stringsAsFactors=FALSE)
 carto_mpa <- st_transform(carto_mpa, crs = "EPSG:4326")
@@ -1052,9 +1071,9 @@ print(carto_mpa1 <- st_crs(carto_mpa)) # area is in sq km
 
 unique(carto_mpa$FYLKESNAVN)
 
-# Find the sums of all areas of SVO per county
+# Find the sums of all areas of MPAs per county
 # Use the sum of municipality areas summed for each county = sum_areas from above
-# Calculate the proportion of SVO per county relative to the total area of each county water
+# Calculate the proportion of MPAs per county relative to the total area of each county water
 carto_mpa_ratios <- c(
   (sum(carto_mpa$area[carto_mpa$FYLKESNAVN == "\"M\u00F8re og Romsdal\""]) / (sum_areas$Total_Shape_Area[sum_areas$FYLKESNAVN == "\"M\u00F8re og Romsdal\""]*1e-06)*100), # 0.3720752  
   (sum(carto_mpa$area[carto_mpa$FYLKESNAVN == "\u00D8stfold"]) / (sum_areas$Total_Shape_Area[sum_areas$FYLKESNAVN == "\u00D8stfold"]*1e-06)*100), # 35.9828636     
@@ -1070,6 +1089,11 @@ carto_mpa_ratios <- c(
 )
 print(carto_mpa_ratios)
 
+# Make output into percentages
+carto_percent <- c(0.3720752 ,35.9828636, 2.5794776 , 0.6461315, 4.9742430 , 1.8524839,0.3454916  ,0.5081613, 8.8395135, 12.4346427,17.4952050)
+carto_percent <- paste0(round(carto_percent, 2), "%")
+print(carto_percent)
+
 
 # Read the shp made in ArcGIS Pro to an sf object - ODIMS 2021 data (https://odims.ospar.org/en/submissions/ospar_mpa_2021_07/)
 ospar_mpa <- st_read("C:/Users/gngia/OneDrive/Documents/new obis/ospar_mpa_new.shp", stringsAsFactors=FALSE)
@@ -1078,9 +1102,9 @@ print(ospar_mpa1 <- st_crs(ospar_mpa)) # area is in sq km
 
 unique(ospar_mpa$FYLKESNAVN)
 
-# Find the sums of all areas of SVO per county
+# Find the sums of all areas of MPAs per county
 # Use the sum of municipality areas summed for each county = sum_areas from above
-# Calculate the proportion of SVO per county relative to the total area of each county water
+# Calculate the proportion of MPAs per county relative to the total area of each county water
 ospar_mpa_ratios <- c(
   (sum(ospar_mpa$area[ospar_mpa$FYLKESNAVN == "\"M\u00F8re og Romsdal\""]) / (sum_areas$Total_Shape_Area[sum_areas$FYLKESNAVN == "\"M\u00F8re og Romsdal\""]*1e-06)*100), # 0.37207520    
   (sum(ospar_mpa$area[ospar_mpa$FYLKESNAVN == "\u00D8stfold"]) / (sum_areas$Total_Shape_Area[sum_areas$FYLKESNAVN == "\u00D8stfold"]*1e-06)*100), # 35.98286348        
@@ -1093,6 +1117,11 @@ ospar_mpa_ratios <- c(
   (sum(ospar_mpa$area[ospar_mpa$FYLKESNAVN == "Vestfold"]) / (sum_areas$Total_Shape_Area[sum_areas$FYLKESNAVN == "Vestfold"]*1e-06)*100) # 17.49520502 
 )
 print(ospar_mpa_ratios)
+
+# Make output into percentages
+ospar_percent <- c(0.37207520 ,35.98286348, 0.05034488 , 0.01431218,1.85248395 , 0.40943903, 8.83951350, 12.43464272, 17.49520502)
+ospar_percent <- paste0(round(ospar_percent, 2), "%")
+print(ospar_percent)
 
 # Read the shp made in ArcGIS Pro to an sf object - Naturvernområder (https://karteksport.miljodirektoratet.no/)
 naturvernomr <- st_read("C:/Users/gngia/OneDrive/Documents/new obis/naturvernomr.shp", stringsAsFactors=FALSE)
@@ -1126,6 +1155,11 @@ naturvernomr_ratios <- c(
   )
 print(naturvernomr_ratios)
 
+# Make output into percentages
+naturvern_percent <- c(4.716314, 43.947853, 5.008229 , 3.498783,5.566015,  5.431686, 1.631439 , 6.079442, 10.951922 , 1.012029, 12.579167, 18.159375, 6.810401 , 6.121035)
+naturvern_percent <- paste0(round(naturvern_percent, 2), "%")
+print(naturvern_percent)
+
 # Read the shp made in ArcGIS Pro to an sf object - KBAs (www.birdlife.org)
 kba <- st_read("C:/Users/gngia/OneDrive/Documents/new obis/kba.shp", stringsAsFactors=FALSE)
 kba <- st_transform(kba, crs = "EPSG:4326")
@@ -1148,6 +1182,11 @@ kba_ratios <- c(
   (sum(kba$area[kba$FYLKESNAVN == "Vestfold"]) / (sum_areas$Total_Shape_Area[sum_areas$FYLKESNAVN == "Vestfold"]*1e-06)*100) # 0.04011559 
 )
 print(kba_ratios)
+
+# Make output into percentages
+kba_percent <- c(4.71686754 ,1.46388072, 0.68690089 ,2.34074604, 4.73011768 ,2.34715764, 5.24032193 ,0.50188690, 0.04011559)
+kba_percent <- paste0(round(kba_percent, 2), "%")
+print(kba_percent)
 
 
 # Read the shp made in ArcGIS Pro to an sf object - Ramsar areas (https://https://karteksport.miljodirektoratet.no/)
@@ -1175,3 +1214,66 @@ ramsar_ratios <- c(
   (sum(ramsar$area[ramsar$FYLKESNAVN == "Vestfold"]) / (sum_areas$Total_Shape_Area[sum_areas$FYLKESNAVN == "Vestfold"]*1e-06)*100) # 0.03360105 
 )
 print(ramsar_ratios)
+
+# Make output into percentages
+ramsar_percent <- c(0.05843156, 1.67994723, 0.17569259 ,0.85877814, 0.18524557, 1.53905531,3.82138631, 0.05057133, 0.03360105)
+ramsar_percent <- paste0(round(ramsar_percent, 2), "%")
+print(ramsar_percent)
+
+
+# WANT A DIFFERENT HUMMER LAYER 
+
+######################### Checks & Notes ##################################
+
+
+#ADD HOW THE CORAL MPAS ARENT ALL GEOGRAPHICALLY DEFINE AS ACTUAL MPAS
+
+#Notes from 24.04
+# finish running the ratios on the above shps. 
+# write methods and add all of the stuff from 23.04 and 24.04 to results
+# intro + move stuff to word ?
+
+
+
+sum(map_occ_joined_clip2$occurrences) #910 008 
+sum(intersect3$occurrences) #380 104  with 0 in class == Aves
+sum(areas$occurrences) #380 104
+sum(by_county_occ_sum$occurrences) #380 104
+
+sum(
+  (intersect3_finnmark$occurrences),
+  (intersect3_moere$occurrences),
+  (intersect3_nordland$occurrences),
+  (intersect3_troms$occurrences),
+  (intersect3_troendelag$occurrences),
+  (intersect3_agder$occurrences),
+  (intersect3_akershus$occurrences),
+  (intersect3_buskerud$occurrences),
+  (intersect3_oslo$occurrences), 
+  (intersect3_rogaland$occurrences),
+  (intersect3_telemark$occurrences),
+  (intersect3_vestfold$occurrences),
+  (intersect3_vestland$occurrences),
+  (intersect3_oestfold$occurrences)
+) #380 104
+
+sum(summary_table$Total_Occurrences.occurrences) #380 104
+
+(3535.2188/ 11992319367)*100
+(514.1488 / (18672331023 + 11992319367))*100
+(8652.7844 /18672331023)*100
+----------------------------------------------------------
+any(is.na(intersect3$FYLKESNAVN))
+any(is.na(intersect3$occurrences))
+indices_with_na <- which(colSums(is.na(intersect3)) > 0)
+print(indices_with_na)
+
+
+any(is.na(intersect3$aphiaID)) #False
+any(is.na(class_taxa$scientificname)) #False
+any(is.na(occ_sf$class)) # True
+any(is.na(occ_sf$phylum)) #True
+any(is.na(occ_sf$genus)) #True 
+any(is.na(map_occ_joined_clip1$originalScientificName))  #False
+
+any(is.na(intersect3$phylum))
