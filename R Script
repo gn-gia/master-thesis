@@ -546,6 +546,10 @@ print(oslo_map)
 library(ggplot2)
 library(patchwork)
 
+agder_map + akershus_map + buskerud_map + finnmark_map + moere_map + nordland_map + 
+oslo_map + rogaland_map + telemark_map + troms_map + troendelag_map + vestfold_map + 
+vestland_map + oestfold_map + plot_layout(nrow = 2, byrow = FALSE) + plot_annotation(title = 'The surprising story about mtcars')
+
 # Set common color scale for species occurrences
 common_limits <- c(0, 16800)
 
