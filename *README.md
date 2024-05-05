@@ -4,6 +4,14 @@ This repository is used for my master's thesis (May 2024).
 The purpose of this repo is to record the R script used to analyse species occurrence data with regards to coastal Norway and administrative borders. It was used in a broader way to inform on MPA network design and MPA criteria.
 
 ArcGIS Pro 3.2 (3.2.49743) and R version 4.3.3 (Angel Food Cake) are used.
+List of files in this repository:
+
+Full_list_of_species is the list of species found in the coastal territorial waters of Norway, including birds, and generally excluding Bacteria, Protozoa, Fungi, and Biota incertae sedis.
+
+R Scrit gives the full R script built and used for this project.
+R packages and citations gives the full list of R packages and their citations.
+
+OBIS Mapper map with coords and filter gives the OBIS Mapper map with the filter to keep occurrences within Norway (areaid = "179"), the drawn polygon, and WKT string to delimt the polygon.
  
 - Helpful links:
   - https://obis.org/ (OBIS)
