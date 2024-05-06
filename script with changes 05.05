@@ -44,8 +44,6 @@ filtered_data <- o %>%
   filter(kingdom %in% c("Animalia", "Plantae", "Chromista", NA))
 View(filtered_data)
 
-sum(filtered_data$individualCount)
-
 filtered_data1 <- filtered_data %>%
   filter(!(class == "Aves"))
 View(filtered_data1)
@@ -313,7 +311,7 @@ centroid_data8 <- cbind(centroid_data8, st_coordinates(centroid_data8))
 # Plot with labels
 troendelag_map <- ggplot() +
   geom_sf(data = shp2_troendelag, color = "gray30", size = 0.2, fill = NA) +
-  geom_sf(data = intersect3_troendelag, aes(color = occurrences), size = 1, fill = NA) +
+  geom_sf(data = intersect3_troendelag, aes(color = occurrences), size = 1.5, fill = NA) +
   scale_fill_gradient(low = "green", high = "red") +
   scale_color_gradient(low = "green", high = "red") +  # Adding color scale for points
   ggtitle("Tr\u00F8ndelag") +
@@ -612,6 +610,8 @@ print(rows_with_na) # 0
 #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% SUMMARIZE OCCURRENCES
 
 sum(intersect3$occurrences) #136,945
+
+length(unique(intersect3$originalScientificName)) # 3737
 
 # % of occurrences for each county compared to sum of total occurrences
 occurrence_ratios <- c(
@@ -1095,6 +1095,30 @@ print(lob_con_ratios)
 lob_con_percent <- c(0.07721415,  3.08883530,  0.00864787, 28.67519468 , 0.49820126,  0.35300533, 1.37768073 , 0.07832196  ,2.22179824)
 lob_con_percent <- paste0(round(lob_con_percent, 2), "%")
 print(lob_con_percent)
+
+
+# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% DEPTH
+
+map_occ_joined_clip3 <- map_occ_joined_clip1 %>%
+  group_by(FYLKESNAVN, originalScientificName, depth) %>%
+  summarize(occurrences = n())
+View(map_occ_joined_clip3)
+
+intersect4 <- st_intersection(map_occ_joined_clip3, shp2)
+
+# Plot the depth data for the occurrences
+depth <- ggplot() +
+  geom_sf(data = shp2) +
+  geom_sf(data = intersect4, aes(color = depth)) +
+  scale_fill_gradient(low = "orange", high = "blue") +
+  scale_color_gradient(low = "orange", high = "blue") +  # Adding color scale for points
+  theme_bw() +
+  theme(axis.title.x = element_blank(),  # Remove x-axis title
+        axis.title.y = element_blank(),  # Remove y-axis title
+        plot.title.position = "plot",  # Position the title centered above the plot
+        plot.title = element_text(hjust = 0.5))  # Center the title text
+
+print(depth)
 
 
 ######################### Checks & Notes ##################################
