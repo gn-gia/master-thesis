@@ -15,6 +15,7 @@ install.packages("openxlsx")
 install.packages("units")
 install.packages("viridis")
 install.packages("cowplot")
+install.packages("tidyverse")
 
 library(dplyr)
 library(ggplot2)
@@ -51,6 +52,7 @@ View(filtered_data1)
 # Plot filtered data
 map_ggplot(filtered_data1, color = "blue")
 
+library(sf)
 # Transform to sf object and set crs (EPSG:4326, WGS84)
 occ_sf <- st_as_sf(filtered_data1, coords = c("decimalLongitude", "decimalLatitude"))
 occ_sf <- st_set_crs(occ_sf, "EPSG:4326")
@@ -452,7 +454,7 @@ intersect3_oslo <- intersect3 %>%
 
 # Extract x and y coordinates from geometry column
 centroid_data14 <- st_centroid(shp2_oslo)
-centroid_data14 <- cbind(centroid_data14, st_coordinates(centroid_data14))
+centroid_data14 <- cbind(centroid_data14, st_coordinates(centroid_data14)) # since i took out the labeling, i can take out centroid
 
 # Plot with labels
 oslo_map <- ggplot() +
@@ -1096,6 +1098,77 @@ lob_con_percent <- c(0.07721415,  3.08883530,  0.00864787, 28.67519468 , 0.49820
 lob_con_percent <- paste0(round(lob_con_percent, 2), "%")
 print(lob_con_percent)
 
+# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% GRID OCCURRENCES
+sum(intersect3$occurrences)
+library(sf)
+library(tidyverse)
+library(sf)
+library(raster)
+library(ggplot2)
+library(stringr)
+
+class(intersect3_oslo)
+
+intersect3_oslo1 <- intersect3_oslo %>%
+  mutate(
+    longitude = as.numeric(str_extract(geometry, "[-+]?[0-9]+\\.?[0-9]*")),
+    latitude = as.numeric(str_extract(geometry, "\\s([-+]?[0-9]+\\.?[0-9]*)$"))
+  )
+
+
+
+class(intersect3_oslo$geometry)
+str(intersect3_oslo$geometry)
+
+
+
+
+df_sf <- intersect3_oslo %>%
+  st_coordinates() %>%
+  as.data.frame() %>%
+  rename(longitude = X, latitude = Y)
+print(df_sf)
+df_sf <- st_as_sf(df_sf, coords = c("longitude", "latitude"), crs = 4326)
+
+grid <- st_make_grid(df_sf, cellsize = 2000)
+grid <- st_as_sf(grid)
+grid$grid_id <- seq_along(grid) 
+
+
+# Perform spatial join (count points within each grid cell)
+grid_with_counts <- st_join(df_sf, grid, intersect3_oslo) %>%
+                       group_by(grid_id) %>%
+                       summarise(occurrences = n()) %>%
+                       ungroup()
+
+ggplot() +
+  geom_sf(data = intersect3_oslo, fill = "lightblue") +
+  geom_sf(data = grid_with_counts, aes(fill = species_count), color = "grey") +
+  scale_fill_gradient(low = "white", high = "red", name = "Species Count") +
+  theme_minimal()
+
+class(intersect3_oslo)
+
+
+
+df_sf <- intersect3_oslo %>%
+  st_coordinates() %>%
+  as.data.frame() %>%
+  rename(longitude = X, latitude = Y) %>%
+  st_as_sf(coords = c("longitude", "latitude"), crs = 4326)
+
+grid <- st_make_grid(intersect3_oslo, cellsize = 2000)
+grid <- st_as_sf(grid)
+grid$grid_id <- seq_along(grid)
+grid_with_counts <- st_join(grid, df_sf, join = st_within) %>%
+  group_by(grid_id) %>%
+  summarise(occurrences = n()) %>%
+  ungroup()
+ggplot() +
+  geom_sf(data = intersect3_oslo, fill = "lightblue") +
+  geom_sf(data = grid_with_counts, aes(fill = occurrences), color = "grey") +
+  scale_fill_gradient(low = "white", high = "red", name = "Occurrences Count") +
+  theme_minimal()
 
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% DEPTH
 
@@ -1128,8 +1201,6 @@ print(depth)
 
 # Notes from 30.04
 # Continue writing (articles that I found to read are in Thesis)
-# Finish introduction
-# Merge table of all ratios 
 # Species that are indicative of a habitat type.
 # Grid the county water and then use red green to mark what is there
 # Take into account
@@ -1139,8 +1210,3 @@ print(depth)
 # Another use metric:
 #  Amount of water is being used ? (Bottom trawling, etc)
 # Or use a coastline by drawing a linear line
-
-#Notes from 24.04
-# finish running the ratios on the above shps. 
-# write methods and add all of the stuff from 23.04 and 24.04 to results
-# intro + move stuff to word ?
