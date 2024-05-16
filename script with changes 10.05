@@ -39,7 +39,7 @@ o <- occurrence(areaid = "179", mof = TRUE, geometry = "POLYGON ((34.4004 70.253
            23.9238 69.6998, 26.5254 70.1344, 29.5488 69.5284, 32.2910 69.4051, 34.4004 70.2535))")
 
 unique(o$kingdom)
-
+View(o)
 # Filter rows based on the specified conditions
 filtered_data <- o %>%
   filter(kingdom %in% c("Animalia", "Plantae", "Chromista", NA))
@@ -475,91 +475,88 @@ oslo_map <- ggplot() +
 
 print(oslo_map)
 
-
-library(sf)
-library(dplyr) 
-intersect3_oslo <- st_as_sf(intersect3_oslo, wkt = "intersect3_oslo$geometry")
-# Function to convert MULTIPOINT to POINT geometries
-convert_multipoint_to_point <- function(geom) {
-  if (inherits(geom, "sfc_MULTIPOINT")) {
-    return(st_cast(geom, "POINT"))
-  } else {
-    return(geom)  # Return POINT geometries unchanged
-  }
-}
-
-# Apply the function to the geometry column
-intersect3_oslo$geometry <- lapply(intersect3_oslo$geometry, convert_multipoint_to_point)
-class(intersect3_oslo$geometry)
 print(intersect3_oslo$geometry)
 print.table(intersect3_oslo$geometry)
 
-# Convert the list of geometries back to sf object
-intersect3_oslo1 <- st_sf(intersect3_oslo$geometry)
-class(intersect3_oslo)
-# Transform geometries to WGS84 (lat-long)
-intersect3_oslo1 <- st_transform(intersect3_oslo1, crs ="EPSG:4326")
-
-ggplot() +
-  geom_sf(data = intersect3_oslo) +
-  ggtitle("iIntersect3_Oslo") +
-  theme_bw()
 
 
 
 
-
-
-
-# Define a custom function to convert MULTIPOINT to multiple POINTs
-geom1 <- intersect3_oslo$geometry
-convert_multipoint_to_points <- function(geom) {
-  if (st_geometry_type(geom) == "MULTIPOINT") {
-    # Extract individual points from MULTIPOINT geometry
-    points <- st_cast(geom, "POINT")
-    return(points)
-  } else {
-    return(geom)  # Return POINT geometry unchanged
-  }
-}
-
-# Apply the custom function to each geometry in the data frame
-intersect3_oslo$geometry <- lapply(geom, convert_multipoint_to_points)
-
-# Convert the updated data frame to an sf object
-intersect3_oslo_sf <- st_as_sf(intersect3_oslo)
-
-# Print the resulting sf object with converted geometries
-print(intersect3_oslo_sf)
-
-
-
-
-
-st_as_sf(intersect3_oslo)
-# Define a function to convert MULTIPOINT to multiple POINTs
-convert_multipoint_to_points <- function(intersect3_oslo) {
-  points <- st_cast(intersect3_oslo, "POINT")
-  if (length(points) > 1) {
-    return(unlist(points))
-  } else {
-    return(points)
-  }
-}
-
-# Apply the function to each geometry in the data frame
-intersect3_oslo$geometry <- lapply(intersect3_oslo$geometry, convert_multipoint_to_points)
-
-print.table(intersect3_oslo$geometry)
-class(intersect3_oslo)
-class(intersect3_oslo$geometry)
+###### SIMEN KODD START #########################################################
+# Load required libraries
 library(sf)
-library(mapview)
-str <- print(intersect3_oslo$geometry)
-pnt <- st_as_sfc(str, crs = 4326)
-mapview(pnt)
-str(intersect3_oslo$occurrences)
-summary(intersect3_oslo$occurrences)
+library(dplyr)  # For data manipulation with pipes
+
+# Assuming 'intersect3' and 'shp2' are your actual data frames
+
+# Filter shp2 to include only the geometry for the county of interest (Oslo)
+shp2_oslo <- shp2[shp2$FYLKESNAVN == "Oslo", ]
+
+# Filter intersect3 to include only the data for Oslo
+intersect3_oslo <- intersect3 %>%
+  filter(FYLKESNAVN == "Oslo")
+
+# Function to process multi-point geometry and return a vector of points
+process_multipoint <- function(multipoint) {
+  # Remove "MULTIPOINT" and parentheses
+  points_str <- gsub("^MULTIPOINT\\(|\\)$", "", multipoint)
+  # Split the string by commas to separate individual points
+  points <- strsplit(points_str, ", ")[[1]]
+  
+  # Initialize a vector to store new points
+  new_points <- character(length(points))
+  
+  # Iterate over each point string
+  for (i in seq_along(points)) {
+    # Extract x and y coordinates
+    coords <- as.numeric(unlist(strsplit(points[i], " ")))
+    x <- coords[1]
+    y <- coords[2]
+    
+    # Create a new point and store it
+    new_points[i] <- sprintf("POINT(%.1f %.1f)", x, y)  # Modify the format as needed
+  }
+  
+  return(new_points)
+}
+
+# Process and replace multi-point geometries in intersect3_oslo
+intersect3_oslo$geometry <- lapply(intersect3_oslo$geometry, function(geom) {
+  if (startsWith(as.character(geom), "MULTIPOINT")) {
+    # Process multi-point geometry
+    process_multipoint(as.character(geom))
+  } else {
+    # Keep original geometry if not multi-point
+    as.character(geom)
+  }
+})
+
+# Convert to sf object
+intersect3_oslo <- st_as_sf(intersect3_oslo, coords = c("geometry"), crs = st_crs(shp2_oslo))
+
+# Plotting the map
+oslo_map <- ggplot() +
+  geom_sf(data = shp2_oslo, color = "gray30", size = 0.2, fill = "lightblue1") +
+  geom_sf(data = intersect3_oslo, aes(color = occurrences), size = 1.5, fill = NA) +
+  scale_color_viridis(option = "plasma", begin = 0, end = 1, direction = -1) +
+  ggtitle("Oslo") +
+  theme_bw() +
+  theme(axis.title.x = element_blank(),
+        axis.title.y = element_blank(),
+        plot.title.position = "panel",
+        plot.title = element_text(hjust = 0.5)
+  )
+
+print(oslo_map)
+
+
+
+
+##### SIMEN KOOD END ###############################################################
+
+
+
+
 
 ################################### STATISTICS #######################################################
 library(ggplot2)
@@ -1188,9 +1185,41 @@ lob_con_percent <- c(0.07721415,  3.08883530,  0.00864787, 28.67519468 , 0.49820
 lob_con_percent <- paste0(round(lob_con_percent, 2), "%")
 print(lob_con_percent)
 
-# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% GRID OCCURRENCES
-sum(intersect3$occurrences)
+# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% WEIRD PLOTTING STUFF
 library(sf)
+
+class(intersect3_oslo)
+class(intersect3_oslo$geometry)
+
+recast <- st_as_sf(intersect3_oslo)
+class(recast)
+print(recast)
+class(recast$geometry)
+
+geom_recast <- recast %>%
+  st_as_sf(wkt = "geometry") %>%
+  st_coordinates(geometry) %>%
+  as.data.frame() %>%
+  rename(longitude = X, latitude = Y) %>%
+  st_as_sf(coords = c("longitude", "latitude"), crs = "EPSG:4326")
+
+
+
+library(sf)
+library(dplyr)
+
+# Step 1: Convert WKT strings to sf objects
+recast <- intersect3_oslo %>%
+  as.data.frame() %>%
+  st_as_sf( wkt = "geometry") %>%
+  st_transform(crs = 4326) %>%
+  st_cast(recast,"POINT") %>%
+  rename(longitude = X, latitude = Y) %>%
+  st_as_sf(coords = c("longitude", "latitude"), crs = 4326)
+
+
+# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% GRID
+sum(intersect3$occurrences)
 library(tidyverse)
 library(sf)
 library(raster)
@@ -1235,83 +1264,6 @@ oslo_map_with_grid <- ggplot() +
   )
 
 print(oslo_map_with_grid)
-
-sum(intersect3_oslo$occurrences)
-View(intersect3_oslo)
-
-sum(grid_with_counts$occurrences) #96
-
-# Output grid counts to see how many cells have data and how many do not
-print(grid_counts)
-
-
-
-class(intersect3_oslo)
-
-intersect3_oslo1 <- intersect3_oslo %>%
-  mutate(
-    longitude = as.numeric(str_extract(geometry, "[-+]?[0-9]+\\.?[0-9]*")),
-    latitude = as.numeric(str_extract(geometry, "\\s([-+]?[0-9]+\\.?[0-9]*)$"))
-  )
-
-
-
-class(intersect3_oslo$geometry)
-str(intersect3_oslo$geometry)
-
-
-
-intersect3_oslo <- st_sf(intersect3_oslo)
-class(intersect3_oslo$geometry)
-st_sf(intersect3_oslo)
-
-df_sf <- intersect3_oslo %>%
-  st_coordinates() %>%
-  as.data.frame() %>%
-  rename(longitude = X, latitude = Y)
-print(df_sf)
-df_sf <- st_as_sf(df_sf, coords = c("longitude", "latitude"), crs = 4326)
-
-grid <- st_make_grid(df_sf, cellsize = 2000)
-grid <- st_as_sf(grid)
-grid$grid_id <- seq_along(grid) 
-
-
-# Perform spatial join (count points within each grid cell)
-grid_with_counts <- st_join(df_sf, grid, intersect3_oslo) %>%
-                       group_by(grid_id) %>%
-                       summarise(occurrences = n()) %>%
-                       ungroup()
-
-ggplot() +
-  geom_sf(data = intersect3_oslo, fill = "lightblue") +
-  geom_sf(data = grid_with_counts, aes(fill = species_count), color = "grey") +
-  scale_fill_gradient(low = "white", high = "red", name = "Species Count") +
-  theme_minimal()
-
-class(intersect3_oslo)
-
-
-
-
-df_sf <- intersect3_oslo %>%
-  st_coordinates() %>%
-  as.data.frame() %>%
-  rename(longitude = X, latitude = Y) %>%
-  st_as_sf(coords = c("longitude", "latitude"), crs = 4326)
-
-grid <- st_make_grid(intersect3_oslo, cellsize = 2000)
-grid <- st_as_sf(grid)
-grid$grid_id <- seq_along(grid)
-grid_with_counts <- st_join(grid, df_sf, join = st_within) %>%
-  group_by(grid_id) %>%
-  summarise(occurrences = n()) %>%
-  ungroup()
-ggplot() +
-  geom_sf(data = intersect3_oslo, fill = "lightblue") +
-  geom_sf(data = grid_with_counts, aes(fill = occurrences), color = "grey") +
-  scale_fill_gradient(low = "white", high = "red", name = "Occurrences Count") +
-  theme_minimal()
 
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% DEPTH
 
