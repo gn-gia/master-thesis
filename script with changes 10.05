@@ -117,13 +117,17 @@ class(intersect3) # sf, tbl_df, tbl, data.frame
 
 sum(intersect3$occurrences) # 136,945
 
-# Plot the intersection 
-ggplot() +
-  geom_sf(data = shp) +
-  geom_sf(data = shp2, color = "gold", size = 0.2, fill = NA) 
-  theme_bw()
+sum(intersect3$occurrences[intersect3$FYLKESNAVN == "Oslo"])
 
-print(intersect3_plot)
+# Plot the intersection 
+ g1 <- ggplot() +
+  geom_sf(data = shp) +
+  geom_sf(data = shp2, color = "gold", size = 0.2, fill = NA) +
+  geom_sf(data = intersect3, aes(color = occurrences), size = 1, fill = NA) +
+  theme_bw()
+ 
+ print(g1)
+
 unique(intersect3$FYLKESNAVN)
 # Unicode <- https://symbl.cc/en/unicode-table/#latin-1-supplement
 #st_centroid returns the geometric center for a geometry
@@ -239,9 +243,8 @@ centroid_data5 <- cbind(centroid_data5, st_coordinates(centroid_data5))
 # Plot with labels
 vestland_map <- ggplot() +
   geom_sf(data = shp2_vestland, color = "gray30", size = 0.2, fill = NA) +
-  geom_sf(data = intersect3_vestland, aes(color = occurrences), size = 1, fill = NA) +
-  scale_fill_gradient(low = "green", high = "red") +
-  scale_color_gradient(low = "green", high = "red") +  # Adding color scale for points
+  geom_sf(data = intersect3_vestland, aes(color = occurrences), size = 0.8, fill = NA) +
+  scale_color_viridis(option = "magma", begin = 0.1, end = "0.8", direction = -1) +  # Adding color scale for points
   ggtitle("Vestland") +
   theme_bw() +
   theme(axis.title.x = element_blank(),  # Remove x-axis title
@@ -456,20 +459,107 @@ intersect3_oslo <- intersect3 %>%
 centroid_data14 <- st_centroid(shp2_oslo)
 centroid_data14 <- cbind(centroid_data14, st_coordinates(centroid_data14)) # since i took out the labeling, i can take out centroid
 
+library(viridis) 
 # Plot with labels
 oslo_map <- ggplot() +
-  geom_sf(data = shp2_oslo, color = "gray30", size = 0.2, fill = NA) +
-  geom_sf(data = intersect3_oslo, aes(color = occurrences), size = 1, fill = NA) +
-  scale_fill_gradient(low = "green", high = "red") +
-  scale_color_gradient(low = "green", high = "red") +  # Adding color scale for points
+  geom_sf(data = shp2_oslo, color = "gray30", size = 0.2, fill = "lightblue1") +
+  geom_sf(data = intersect3_oslo, aes(color = occurrences), size = 1.5, fill = NA) +
+  scale_color_viridis(option = "plasma", begin = 0, end = 1, direction = -1) +  # Adding color scale for points
   ggtitle("Oslo") +
   theme_bw() +
   theme(axis.title.x = element_blank(),  # Remove x-axis title
         axis.title.y = element_blank(),  # Remove y-axis title
-        plot.title.position = "plot",  # Position the title centered above the plot
-        plot.title = element_text(hjust = 0.5))  # Center the title text
+        plot.title.position = "panel",  # Position the title centered above the plot
+        plot.title = element_text(hjust = 0.5)  # Center the title text
+)
 
 print(oslo_map)
+
+
+library(sf)
+library(dplyr) 
+intersect3_oslo <- st_as_sf(intersect3_oslo, wkt = "intersect3_oslo$geometry")
+# Function to convert MULTIPOINT to POINT geometries
+convert_multipoint_to_point <- function(geom) {
+  if (inherits(geom, "sfc_MULTIPOINT")) {
+    return(st_cast(geom, "POINT"))
+  } else {
+    return(geom)  # Return POINT geometries unchanged
+  }
+}
+
+# Apply the function to the geometry column
+intersect3_oslo$geometry <- lapply(intersect3_oslo$geometry, convert_multipoint_to_point)
+class(intersect3_oslo$geometry)
+print(intersect3_oslo$geometry)
+print.table(intersect3_oslo$geometry)
+
+# Convert the list of geometries back to sf object
+intersect3_oslo1 <- st_sf(intersect3_oslo$geometry)
+class(intersect3_oslo)
+# Transform geometries to WGS84 (lat-long)
+intersect3_oslo1 <- st_transform(intersect3_oslo1, crs ="EPSG:4326")
+
+ggplot() +
+  geom_sf(data = intersect3_oslo) +
+  ggtitle("iIntersect3_Oslo") +
+  theme_bw()
+
+
+
+
+
+
+
+# Define a custom function to convert MULTIPOINT to multiple POINTs
+geom1 <- intersect3_oslo$geometry
+convert_multipoint_to_points <- function(geom) {
+  if (st_geometry_type(geom) == "MULTIPOINT") {
+    # Extract individual points from MULTIPOINT geometry
+    points <- st_cast(geom, "POINT")
+    return(points)
+  } else {
+    return(geom)  # Return POINT geometry unchanged
+  }
+}
+
+# Apply the custom function to each geometry in the data frame
+intersect3_oslo$geometry <- lapply(geom, convert_multipoint_to_points)
+
+# Convert the updated data frame to an sf object
+intersect3_oslo_sf <- st_as_sf(intersect3_oslo)
+
+# Print the resulting sf object with converted geometries
+print(intersect3_oslo_sf)
+
+
+
+
+
+st_as_sf(intersect3_oslo)
+# Define a function to convert MULTIPOINT to multiple POINTs
+convert_multipoint_to_points <- function(intersect3_oslo) {
+  points <- st_cast(intersect3_oslo, "POINT")
+  if (length(points) > 1) {
+    return(unlist(points))
+  } else {
+    return(points)
+  }
+}
+
+# Apply the function to each geometry in the data frame
+intersect3_oslo$geometry <- lapply(intersect3_oslo$geometry, convert_multipoint_to_points)
+
+print.table(intersect3_oslo$geometry)
+class(intersect3_oslo)
+class(intersect3_oslo$geometry)
+library(sf)
+library(mapview)
+str <- print(intersect3_oslo$geometry)
+pnt <- st_as_sfc(str, crs = 4326)
+mapview(pnt)
+str(intersect3_oslo$occurrences)
+summary(intersect3_oslo$occurrences)
 
 ################################### STATISTICS #######################################################
 library(ggplot2)
@@ -1107,6 +1197,55 @@ library(raster)
 library(ggplot2)
 library(stringr)
 
+
+bbox <- st_bbox(shp2_oslo)
+
+# Create a grid with cells of 10m x 10m
+grid_10m <- st_make_grid(shp2_oslo, cellsize = c(10, 10), what = "polygons")
+
+# Convert the grid polygons to the same CRS as your occurrence data
+grid_10m <- st_transform(grid_10m, st_crs(intersect3_oslo))
+
+grid_10m <- st_as_sf(grid_1m)
+
+# Perform spatial join to count occurrences per grid cell
+grid_with_counts <- st_join(grid_10m, intersect3_oslo, left = FALSE)
+
+# Aggregate counts by grid cell
+grid_counts <- as.data.frame(table(grid_with_counts$geometry))
+
+# Rename columns for clarity
+colnames(grid_counts) <- c("grid_cell", "occurrence_count")
+
+
+oslo_map_with_grid <- ggplot() +
+  geom_sf(data = shp2_oslo, color = "gray30", size = 0.2, fill = NA) +
+  geom_sf(data = intersect3_oslo, aes(color = occurrences), size = 1.5, fill = NA) +
+  scale_fill_gradient(low = "blue", high = "red") +
+  scale_color_gradient(low = "blue", high = "red") +  # Adding color scale for points
+  ggtitle("Oslo") +
+  theme_bw() +
+  theme(axis.title.x = element_blank(),  # Remove x-axis title
+        axis.title.y = element_blank(),  # Remove y-axis title
+        plot.title.position = "plot",  # Position the title centered above the plot
+        plot.title = element_text(hjust = 0.5),  # Center the title text
+        panel.grid.major = element_line(color = "black", linewidth = 0.1),
+        panel.background = element_rect(fill = NA),
+        panel.ontop = TRUE
+  )
+
+print(oslo_map_with_grid)
+
+sum(intersect3_oslo$occurrences)
+View(intersect3_oslo)
+
+sum(grid_with_counts$occurrences) #96
+
+# Output grid counts to see how many cells have data and how many do not
+print(grid_counts)
+
+
+
 class(intersect3_oslo)
 
 intersect3_oslo1 <- intersect3_oslo %>%
@@ -1122,6 +1261,9 @@ str(intersect3_oslo$geometry)
 
 
 
+intersect3_oslo <- st_sf(intersect3_oslo)
+class(intersect3_oslo$geometry)
+st_sf(intersect3_oslo)
 
 df_sf <- intersect3_oslo %>%
   st_coordinates() %>%
@@ -1148,6 +1290,7 @@ ggplot() +
   theme_minimal()
 
 class(intersect3_oslo)
+
 
 
 
