@@ -16,6 +16,8 @@ install.packages("units")
 install.packages("viridis")
 install.packages("cowplot")
 install.packages("tidyverse")
+install.packages("rJava")
+install.packages("wicket")
 
 library(dplyr)
 library(ggplot2)
@@ -78,6 +80,8 @@ shp2 <- st_read("C:/Users/gngia/OneDrive/Documents/new obis/GIS/new_Fylker_Int_T
 shp2 <- st_transform(shp2, crs = "EPSG:4326")
 print(shp3 <- st_crs(shp2))
 class(shp2)
+
+print(shp2)
 
 # Plot shapefile2 with occurrence data
 ggplot() +
@@ -482,7 +486,7 @@ print.table(intersect3_oslo$geometry)
 
 
 
-###### SIMEN KODD START #########################################################
+7###### SIMEN KODD START #########################################################
 # Load required libraries
 library(sf)
 library(dplyr)  # For data manipulation with pipes
@@ -520,19 +524,15 @@ process_multipoint <- function(multipoint) {
   return(new_points)
 }
 
-# Process and replace multi-point geometries in intersect3_oslo
-intersect3_oslo$geometry <- lapply(intersect3_oslo$geometry, function(geom) {
-  if (startsWith(as.character(geom), "MULTIPOINT")) {
-    # Process multi-point geometry
-    process_multipoint(as.character(geom))
-  } else {
-    # Keep original geometry if not multi-point
-    as.character(geom)
-  }
+intersect3_oslo$geometry <- sapply(intersect3_oslo$geometry, function(geom) {
+  ifelse(startsWith(as.character(geom), "MULTIPOINT"),
+         process_multipoint(as.character(geom)),
+         as.character(geom))
 })
 
-# Convert to sf object
-intersect3_oslo <- st_as_sf(intersect3_oslo, coords = c("geometry"), crs = st_crs(shp2_oslo))
+# Convert to sf object and set geometry column
+intersect3_oslo <- st_as_sf(intersect3_oslo, coords = "geometry", crs = st_crs(shp2_oslo))
+st_geometry(intersect3_oslo) <- "geometry"
 
 # Plotting the map
 oslo_map <- ggplot() +
@@ -549,15 +549,196 @@ oslo_map <- ggplot() +
 
 print(oslo_map)
 
+wkt_coords(intersect3_oslo$geometry)
 
 
 
+wkt_data <- st_as_sf(intersect3_oslo, wkt = "geometry", crs = 4326)
+print(wkt_data)
+
+
+# Assuming "wkt_data" is your sf object containing WKT geometries
+# Parse the WKT geometries into sf objects
+parsed_sf <- st_as_sf(wkt_data, wkt = "geometry")
+
+# Extract individual geometries
+geoms <- st_geometry(parsed_sf)
+
+# Initialize empty vectors to store latitude and longitude coordinates
+latitude <- numeric()
+longitude <- numeric()
+
+# Loop through each geometry and extract coordinates
+for (geom in geoms) {
+  # Extract coordinates from the geometry
+  coords <- st_coordinates(geom)
+  
+  # Append latitude and longitude coordinates to respective vectors
+  latitude <- c(latitude, coords[, "Y"])
+  longitude <- c(longitude, coords[, "X"])
+}
+
+# Print or use the latitude and longitude coordinates as needed
+print(longitude)
+print(latitude)
+
+
+
+# Assuming "intersect3_oslo" is your data frame and "geometry" is the column containing WKT strings
+# Parse the WKT geometries into sf objects
+# Load the sf package
+library(sf)
+
+# Assuming "intersect3_oslo" is your data frame and "geometry" is the column containing WKT strings
+# Parse the WKT geometries into sf objects
+parsed_sf <- st_as_sf(intersect3_oslo, wkt = "geometry")
+
+# Extract individual geometries
+geoms <- st_geometry(parsed_sf)
+
+# Initialize empty vectors to store latitude and longitude coordinates
+latitude <- numeric()
+longitude <- numeric()
+
+# Loop through each geometry and extract coordinates
+for (geom in geoms) {
+  # Extract coordinates from the geometry
+  coords <- st_coordinates(geom)
+  
+  # Append latitude and longitude coordinates to respective vectors
+  latitude <- c(latitude, coords[, "Y"])
+  longitude <- c(longitude, coords[, "X"])
+}
+
+# Add latitude and longitude columns to the existing data frame
+intersect3_oslo$latitude <- latitude
+intersect3_oslo$longitude <- longitude
+
+# Print the updated data frame with latitude and longitude columns
+print(intersect3_oslo)
+
+
+
+
+
+
+# Load the sf package
+library(sf)
+
+# Assuming "intersect3_oslo" is your data frame and "geometry" is the column containing WKT strings
+# Parse the WKT geometries into sf objects
+parsed_sf <- st_as_sf(intersect3_oslo, wkt = "geometry")
+
+# Extract individual geometries
+geoms <- st_geometry(parsed_sf)
+
+# Initialize empty lists to store latitude and longitude coordinates
+latitude_list <- list()
+longitude_list <- list()
+
+# Loop through each geometry and extract coordinates
+for (geom in geoms) {
+  # Extract coordinates from the geometry
+  coords <- st_coordinates(geom)
+  
+  # Append latitude and longitude coordinates to respective lists
+  latitude_list <- c(latitude_list, list(coords[, "Y"]))
+  longitude_list <- c(longitude_list, list(coords[, "X"]))
+}
+
+# Add latitude and longitude columns to the existing data frame
+intersect3_oslo$latitude <- latitude_list
+intersect3_oslo$longitude <- longitude_list
+
+# Print the updated data frame with latitude and longitude columns
+print(intersect3_oslo)
+
+
+print.table(intersect3_oslo$geometry)
+
+
+oslo_map <- ggplot() +
+  geom_sf(data = shp2_oslo, color = "gray30", size = 0.2, fill = "lightblue1") +
+  geom_sf(data = intersect3_oslo, aes(color = occurrences), size = 1.5, fill = NA) +
+  scale_color_viridis(option = "plasma", begin = 0, end = 1, direction = -1) +
+  ggtitle("Oslo") +
+  theme_bw() +
+  theme(axis.title.x = element_blank(),
+        axis.title.y = element_blank(),
+        plot.title.position = "panel",
+        plot.title = element_text(hjust = 0.5)
+  )
+
+print(oslo_map)
 ##### SIMEN KOOD END ###############################################################
+sf_objects <- st_as_sf(intersect3_oslo, "geometry", EWKT = TRUE)
+
+# Extract individual geometries
+geoms <- st_geometry(sf_objects)
+
+# Initialize empty vectors to store latitude and longitude coordinates
+latitude <- numeric()
+longitude <- numeric()
+
+# Loop through each geometry and extract coordinates
+for (geom in geoms) {
+  # Extract coordinates from the geometry
+  coords <- st_coordinates(geom)
+  
+  # Append latitude and longitude coordinates to respective vectors
+  latitude <- c(latitude, coords[, "Y"])
+  longitude <- c(longitude, coords[, "X"])
+}
+
+# Print the latitude and longitude coordinates
+print(latitude)
+print(longitude)
 
 
+# Create a data frame to store latitude and longitude coordinates along with identifiers
+coordinates_df <- data.frame(
+  id = numeric(),
+  latitude = numeric(),
+  longitude = numeric()
+)
+
+# Iterate over each geometry and extract coordinates
+for (i in seq_along(geoms)) {
+  coords <- st_coordinates(geoms[[i]])
+  if (nrow(coords) > 0) {
+    coordinates_df <- rbind(coordinates_df, data.frame(
+      id = rep(i, nrow(coords)),
+      latitude = coords[, "Y"],
+      longitude = coords[, "X"]
+    ))
+  }
+}
+
+# Remove the first empty row
+coordinates_df <- coordinates_df[-1,]
+
+# Print the first few rows of the coordinates data frame
+print(coordinates_df)
+
+print.table(intersect3_oslo)
 
 
+# Create a data frame to store latitude and longitude coordinates along with identifiers
+coordinates_df <- data.frame(
+  id = rep(1:nrow(intersect3_oslo), times = sapply(geoms, function(geom) nrow(st_coordinates(geom)))),
+  latitude = numeric(),
+  longitude = numeric()
+)
 
+# Iterate over each geometry and extract coordinates
+for (i in seq_along(geoms)) {
+  coords <- st_coordinates(geoms[[i]])
+  coordinates_df$latitude <- c(coordinates_df$latitude, coords[, "Y"])
+  coordinates_df$longitude <- c(coordinates_df$longitude, coords[, "X"])
+}
+
+# Print the first few rows of the coordinates data frame
+print(head(coordinates_df))
 ################################### STATISTICS #######################################################
 library(ggplot2)
 library(cowplot)  # Load the cowplot package for arranging plots
