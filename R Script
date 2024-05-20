@@ -1,6 +1,6 @@
 # setwd("C:/Users/gngia/OneDrive/Documents/new obis")
 
-install.pacakges("dplyr")
+install.packages("dplyr")
 install.pacakges("robis")
 install.pacakges("ggplot2")
 install.pacakges("sf")
@@ -15,6 +15,9 @@ install.packages("openxlsx")
 install.packages("units")
 install.packages("viridis")
 install.packages("cowplot")
+install.packages("tidyverse")
+install.packages("rJava")
+install.packages("wicket")
 
 library(dplyr)
 library(ggplot2)
@@ -35,7 +38,7 @@ o <- occurrence(areaid = "179", mof = TRUE, geometry = "POLYGON ((34.4004 70.253
            11.4082 66.3939, 9.8613 65.4765, 8.4551 64.7666, 6.9785 63.9451, 5.0098 62.9072,
            3.5332 61.9968, 3.5332 58.3279, 7.2598 57.2790, 11.0567 58.4017, 12.4629 59.0948, 11.3379 60.6473,
            8.6660 60.5783, 8.3145 62.2924, 16.3301 65.6220, 17.2442 67.6293, 20.1973 68.7523,
-           23.9238 69.6998, 26.5254 70.1344, 29.5488 69.5284, 32.2910 69.4051, 34.4004 70.2535))")
+           23.9238 69.6998, 26.5254 70.1344, 29.5488 69.5284, 32.2910 69.4051, 34.4004 70.2535))") # Ran 20.05.2024 @911,521 occ records
 
 unique(o$kingdom)
 
@@ -51,11 +54,17 @@ View(filtered_data1)
 # Plot filtered data
 map_ggplot(filtered_data1, color = "blue")
 
+library(sf)
 # Transform to sf object and set crs (EPSG:4326, WGS84)
 occ_sf <- st_as_sf(filtered_data1, coords = c("decimalLongitude", "decimalLatitude"))
 occ_sf <- st_set_crs(occ_sf, "EPSG:4326")
-print(occ_sf1 <- st_crs(occ_sf))
-class(occ_sf)
+print(st_crs(occ_sf))
+
+# Add the original coordinate columns back to the sf object
+occ_sf$decimalLongitude <- filtered_data1$decimalLongitude
+occ_sf$decimalLatitude <- filtered_data1$decimalLatitude
+
+print(class(occ_sf))
 
 # Read the shapefile into an sf object and set crs (EPSG:4326, WGS84)
 shp <- st_read("C:/Users/gngia/OneDrive/Documents/new obis/GIS/Kommuner_Fylker_Intersect.shp", stringsAsFactors=FALSE)
@@ -72,57 +81,59 @@ ggplot() +
 
 # Read the shapefile into an sf object and set crs (EPSG:4326, WGS84)
 # Shapefile clip with county, municipality, and is only territorial waters
-shp2 <- st_read("C:/Users/gngia/OneDrive/Documents/new obis/GIS/Kommuner_Fylker_TerrVann_Clip.shp", stringsAsFactors=FALSE)
+shp2 <- st_read("C:/Users/gngia/OneDrive/Documents/new obis/GIS/new_Fylker_Int_Terrw.shp", stringsAsFactors=FALSE)
 shp2 <- st_transform(shp2, crs = "EPSG:4326")
 print(shp3 <- st_crs(shp2))
 class(shp2)
 
+print(shp2)
+
 # Plot shapefile2 with occurrence data
 ggplot() +
-  geom_sf(data = shp2) +
+  geom_sf(data = shp2, fill = "black") +
   geom_sf(data = occ_sf, color = "pink", size = 1) +
   theme_bw()
+
 
 # Perform a spatial join
 map_occ_joined_clip1 <- st_join(occ_sf, shp2)
 class(map_occ_joined_clip1)
 View(map_occ_joined_clip1)
 
-# Count the number of occurrences of each species within each county
+# Group by 'FYLKESNAVN' and count distinct 'originalScientificName'
 map_occ__with_clip1 <- map_occ_joined_clip1 %>%
   group_by(FYLKESNAVN) %>%
-  summarize(species_count = n_distinct(originalScientificName)) #I dont understand why this doesnt show species_count in the table / how map_occ_joined_clip2 has occurrences
+  summarize(species_count = n_distinct(originalScientificName))
 View(map_occ_joined_clip1)
 
 map_occ_joined_clip2 <- map_occ_joined_clip1 %>%
-  group_by(FYLKESNAVN, KOMMUNENAV, aphiaID, originalScientificName, family, class, phylum, kingdom, Shape_Area, basisOfRecord) %>%
+  group_by(FYLKESNAVN, aphiaID, originalScientificName, family, class, phylum, kingdom, area_fylk, basisOfRecord, year, decimalLongitude, decimalLatitude) %>%
   summarize(occurrences = n())
 View(map_occ_joined_clip2)
 
-sum(map_occ_joined_clip2$occurrences) # 563,741
+sum(map_occ_joined_clip2$occurrences) # 563,738
 
 # Plot the join
 ggplot() +
   geom_sf(data = shp) +
   geom_sf(data = shp2) +
   geom_sf(data = map_occ_joined_clip2, aes(color = occurrences), size = 0.25) +
-  theme_bw() #map_occ_joined_clip2 extends beyond shp2
-
+  theme_bw()
 
 #Intersect joined data with shp2 (leaves only occurrences within 12nm of the coast)
 intersect3 <- st_intersection(map_occ_joined_clip2, shp2)
 View(intersect3)
 class(intersect3) # sf, tbl_df, tbl, data.frame
 
-sum(intersect3$occurrences) # 136,945
+sum(intersect3$occurrences) # 136,942
 
 # Plot the intersection 
 ggplot() +
   geom_sf(data = shp) +
-  geom_sf(data = shp2, color = "gold", size = 0.2, fill = NA) 
+  geom_sf(data = shp2, color = "gold", size = 0.2, fill = NA) +
+  geom_sf(data = intersect3, aes(color = occurrences), size = 1, fill = NA) +
   theme_bw()
 
-print(intersect3_plot)
 unique(intersect3$FYLKESNAVN)
 # Unicode <- https://symbl.cc/en/unicode-table/#latin-1-supplement
 #st_centroid returns the geometric center for a geometry
@@ -133,21 +144,12 @@ shp2_troms <- shp2[shp2$FYLKESNAVN == "\"Troms - Romsa - Tromssa\"", ]
 intersect3_troms <- intersect3 %>%
   filter(FYLKESNAVN == "\"Troms - Romsa - Tromssa\"",)
 
-# Extract x and y coordinates from geometry column
-centroid_data1 <- st_centroid(shp2_troms)
-centroid_data1 <- cbind(centroid_data1, st_coordinates(centroid_data1))
-
-# Filter centroid_data1 to include only specific values of KOMMUNENAV
-specific_points1 <- centroid_data1[centroid_data1$KOMMUNENAV %in% c("Karls\u00F8y", "Troms\u00F8"), ]
-
 # Plot with labels
 troms_map <-ggplot() +
   geom_sf(data = shp2_troms, color = "gray30", size = 0.2, fill = NA) +
   geom_sf(data = intersect3_troms, aes(color = occurrences), size = 1, fill = NA) +
-  scale_fill_gradient(low = "green", high = "red") +
-  scale_color_gradient(low = "green", high = "red") +  # Adding color scale for points
+  scale_color_viridis_c(option = "viridis", begin = 0, end = 1, direction = -1) +  # continuous color scale
   ggtitle("Troms") +
-  geom_text(data = specific_points1, aes(label = KOMMUNENAV, x = X, y = Y), size = 3, color = "black") +
   theme_bw() +
   theme(axis.title.x = element_blank(),  # Remove x-axis title
         axis.title.y = element_blank(),  # Remove y-axis title
@@ -156,27 +158,21 @@ troms_map <-ggplot() +
 
 print(troms_map)
 
+sum(intersect3_troms$occurrences)
+unique(intersect3_troms$originalScientificName)
+
 ####################### AKERSHUS #######################################
 # Filter shp2 to include only the geometry for the county of interest
 shp2_akershus <- shp2[shp2$FYLKESNAVN == "Akershus", ]
 intersect3_akershus <- intersect3 %>%
   filter(FYLKESNAVN == "Akershus",)
 
-# Extract x and y coordinates from geometry column
-centroid_data2 <- st_centroid(shp2_akershus)
-centroid_data2 <- cbind(centroid_data2, st_coordinates(centroid_data2))
-
-# Filter centroid_data2 to include only specific values of KOMMUNENAV
-specific_points2 <- centroid_data2[centroid_data2$KOMMUNENAV %in% c("\u00C5s", "Asker"), ]
-
 # Plot with labels
 akershus_map <- ggplot() +
   geom_sf(data = shp2_akershus, color = "gray30", size = 0.2, fill = NA) +
   geom_sf(data = intersect3_akershus, aes(color = occurrences), size = 1, fill = NA) +
-  scale_fill_gradient(low = "green", high = "red") +
-  scale_color_gradient(low = "green", high = "red") +  # Adding color scale for points
+  scale_color_viridis_c(option = "viridis", begin = 0, end = 1, direction = -1) +  # continuous color scale
   ggtitle("Akershus") +
-  geom_text(data = specific_points2, aes(label = KOMMUNENAV, x = X, y = Y), size = 3, color = "black") +
   theme_bw() +
   theme(axis.title.x = element_blank(),  # Remove x-axis title
         axis.title.y = element_blank(),  # Remove y-axis title
@@ -185,26 +181,20 @@ akershus_map <- ggplot() +
 
 print(akershus_map)
 
+sum(intersect3_akershus$occurrences)
+unique(intersect3_akershus$originalScientificName)
+
 ####################### MØRE OG ROMSDAL #######################################
 # Filter shp2 to include only the geometry for the county of interest
 shp2_moere <- shp2[shp2$FYLKESNAVN == "\"M\u00F8re og Romsdal\"", ]
 intersect3_moere <- intersect3 %>%
   filter(FYLKESNAVN == "\"M\u00F8re og Romsdal\"",)
 
-# Extract x and y coordinates from geometry column
-centroid_data3 <- st_centroid(shp2_moere)
-centroid_data3 <- cbind(centroid_data3, st_coordinates(centroid_data3))
-
-# Filter centroid_data3 to include only specific values of KOMMUNENAV
-specific_points3 <- centroid_data3[centroid_data3$KOMMUNENAV %in% c("Molde", "Kristiansund"), ]
-
 moere_map <- ggplot() +
   geom_sf(data = shp2_moere, color = "gray30", size = 0.2, fill = NA) +
   geom_sf(data = intersect3_moere, aes(color = occurrences), size = 1, fill = NA) +
-  scale_fill_gradient(low = "green", high = "red") +
-  scale_color_gradient(low = "green", high = "red") +  # Adding color scale for points
+  scale_color_viridis_c(option = "viridis", begin = 0, end = 1, direction = -1) +  # continuous color scale
   ggtitle("M\u00F8re og Romsdal") +
-  geom_text(data = specific_points3, aes(label = KOMMUNENAV, x = X, y = Y), size = 3, color = "black") +
   theme_bw()+
   theme(axis.title.x = element_blank(),  # Remove x-axis title
         axis.title.y = element_blank(),  # Remove y-axis title
@@ -213,26 +203,20 @@ moere_map <- ggplot() +
 
 print(moere_map)
 
+sum(intersect3_moere$occurrences)
+unique(intersect3_moere$originalScientificName)
+
 ####################### ØSTFOLD #######################################
 # Filter shp2 to include only the geometry for the county of interest
 shp2_oestfold <- shp2[shp2$FYLKESNAVN == "\u00D8stfold", ]
 intersect3_oestfold <- intersect3 %>%
   filter(FYLKESNAVN == "\u00D8stfold",)
 
-# Extract x and y coordinates from geometry column
-centroid_data4 <- st_centroid(shp2_oestfold)
-centroid_data4 <- cbind(centroid_data4, st_coordinates(centroid_data4))
-
-# Filter centroid_data4 to include only specific values of KOMMUNENAV
-specific_points4 <- centroid_data4[centroid_data4$KOMMUNENAV %in% c("Moss", "Fredrikstad"), ]
-
 oestfold_map <- ggplot() +
   geom_sf(data = shp2_oestfold, color = "gray30", size = 0.2, fill = NA) +
   geom_sf(data = intersect3_oestfold, aes(color = occurrences), size = 1, fill = NA) +
-  scale_fill_gradient(low = "green", high = "red") +
-  scale_color_gradient(low = "green", high = "red") +
+  scale_color_viridis_c(option = "viridis", begin = 0, end = 1, direction = -1) +  # continuous color scale
   ggtitle("\u00D8stfold") +
-  geom_text(data = specific_points4, aes(label = KOMMUNENAV, x = X, y = Y), size = 3, color = "black") +
   theme_bw() +
   theme(axis.title.x = element_blank(),  # Remove x-axis title
         axis.title.y = element_blank(),  # Remove y-axis title
@@ -241,27 +225,21 @@ oestfold_map <- ggplot() +
 
 print(oestfold_map)
 
+sum(intersect3_oestfold$occurrences)
+unique(intersect3_oestfold$originalScientificName)
+
 ####################### VESTLAND #######################################
 # Filter shp2 to include only the geometry for the county of interest
 shp2_vestland <- shp2[shp2$FYLKESNAVN == "Vestland", ]
 intersect3_vestland <- intersect3 %>%
   filter(FYLKESNAVN == "Vestland",)
 
-# Extract x and y coordinates from geometry column
-centroid_data5 <- st_centroid(shp2_vestland)
-centroid_data5 <- cbind(centroid_data5, st_coordinates(centroid_data5))
-
-# Filter centroid_data5 to include only specific values of KOMMUNENAV
-specific_points5 <- centroid_data5[centroid_data5$KOMMUNENAV %in% c("Bergen"), ]
-
 # Plot with labels
 vestland_map <- ggplot() +
   geom_sf(data = shp2_vestland, color = "gray30", size = 0.2, fill = NA) +
-  geom_sf(data = intersect3_vestland, aes(color = occurrences), size = 1, fill = NA) +
-  scale_fill_gradient(low = "green", high = "red") +
-  scale_color_gradient(low = "green", high = "red") +  # Adding color scale for points
+  geom_sf(data = intersect3_vestland, aes(color = occurrences), size = 0.8, fill = NA) +
+  scale_color_viridis_c(option = "viridis", begin = 0, end = 1, direction = -1) +  # continuous color scale
   ggtitle("Vestland") +
-  geom_text(data = specific_points5, aes(label = KOMMUNENAV, x = X, y = Y), size = 3, color = "black") +
   theme_bw() +
   theme(axis.title.x = element_blank(),  # Remove x-axis title
         axis.title.y = element_blank(),  # Remove y-axis title
@@ -270,26 +248,20 @@ vestland_map <- ggplot() +
 
 print(vestland_map)
 
+sum(intersect3_vestland$occurrences)
+unique(intersect3_vestland$originalScientificName)
+
 ####################### NORDLAND #######################################
 # Filter shp2 to include only the geometry for the county of interest
 shp2_nordland <- shp2[shp2$FYLKESNAVN == "\"Nordland - Nordl\u00E1nnda\"" , ]
 intersect3_nordland <- intersect3 %>% filter(FYLKESNAVN == "\"Nordland - Nordl\u00E1nnda\"" , )
 
-# Extract centroid coordinates from geometry column
-centroid_data6 <- st_centroid(shp2_nordland)
-centroid_data6 <- cbind(centroid_data6, st_coordinates(centroid_data6))
-
-# Filter centroid_data6 to include only specific values of KOMMUNENAV
-specific_points6 <- centroid_data6[centroid_data6$KOMMUNENAV %in% c("Bod\u00F8", "\u00D8ksnes"), ]
-
 # Plot with labels
 nordland_map <- ggplot() +
   geom_sf(data = shp2_nordland, color = "gray30", size = 0.2, fill = NA) +
   geom_sf(data = intersect3_nordland, aes(color = occurrences), size = 1, fill = NA) +
-  scale_fill_gradient(low = "green", high = "red") +
-  scale_color_gradient(low = "green", high = "red") +  # Adding color scale for points
+  scale_color_viridis_c(option = "viridis", begin = 0, end = 1, direction = -1) +  # continuous color scale
   ggtitle("Nordland") +
-  geom_text(data = specific_points6, aes(label = KOMMUNENAV, x = X, y = Y), size = 3, color = "black") +
   theme_bw() +
   theme(axis.title.x = element_blank(),  # Remove x-axis title
         axis.title.y = element_blank(),  # Remove y-axis title
@@ -298,27 +270,21 @@ nordland_map <- ggplot() +
 
 print(nordland_map)
 
+sum(intersect3_nordland$occurrences)
+unique(intersect3_nordland$originalScientificName)
+
 ####################### ROGALAND #######################################
 # Filter shp2 to include only the geometry for the county of interest
 shp2_rogaland <- shp2[shp2$FYLKESNAVN == "Rogaland", ]
 intersect3_rogaland <- intersect3 %>%
   filter(FYLKESNAVN == "Rogaland",)
 
-# Extract x and y coordinates from geometry column
-centroid_data7 <- st_centroid(shp2_rogaland)
-centroid_data7 <- cbind(centroid_data7, st_coordinates(centroid_data7))
-
-# Filter centroid_data7 to include only specific values of KOMMUNENAV
-specific_points7 <- centroid_data7[centroid_data7$KOMMUNENAV %in% c("Stavanger", "Haugesund"), ]
-
 # Plot with labels
 rogaland_map <- ggplot() +
   geom_sf(data = shp2_rogaland, color = "gray30", size = 0.2, fill = NA) +
   geom_sf(data = intersect3_rogaland, aes(color = occurrences), size = 1, fill = NA) +
-  scale_fill_gradient(low = "green", high = "red") +
-  scale_color_gradient(low = "green", high = "red") +  # Adding color scale for points
+  scale_color_viridis_c(option = "viridis", begin = 0, end = 1, direction = -1) +  # continuous color scale
   ggtitle("Rogaland") +
-  geom_text(data = specific_points7, aes(label = KOMMUNENAV, x = X, y = Y), size = 3, color = "black") +
   theme_bw() +
   theme(axis.title.x = element_blank(),  # Remove x-axis title
         axis.title.y = element_blank(),  # Remove y-axis title
@@ -327,27 +293,21 @@ rogaland_map <- ggplot() +
 
 print(rogaland_map)
 
+sum(intersect3_rogaland$occurrences)
+unique(intersect3_rogaland$originalScientificName)
+
 ####################### TRØNDELAG #######################################
 # Filter shp2 to include only the geometry for the county of interest
 shp2_troendelag <- shp2[shp2$FYLKESNAVN == "\"Tr\u00F8ndelag - Tr\u00F6\u00F6ndelage\"" , ]
 intersect3_troendelag <- intersect3 %>%
   filter(FYLKESNAVN == "\"Tr\u00F8ndelag - Tr\u00F6\u00F6ndelage\"")
 
-# Extract x and y coordinates from geometry column
-centroid_data8 <- st_centroid(shp2_troendelag)
-centroid_data8 <- cbind(centroid_data8, st_coordinates(centroid_data8))
-
-# Filter centroid_data8 to include only specific values of KOMMUNENAV
-specific_points8 <- centroid_data8[centroid_data8$KOMMUNENAV %in% c("Steinkjer", "Heim"), ]
-
 # Plot with labels
 troendelag_map <- ggplot() +
   geom_sf(data = shp2_troendelag, color = "gray30", size = 0.2, fill = NA) +
-  geom_sf(data = intersect3_troendelag, aes(color = occurrences), size = 1, fill = NA) +
-  scale_fill_gradient(low = "green", high = "red") +
-  scale_color_gradient(low = "green", high = "red") +  # Adding color scale for points
+  geom_sf(data = intersect3_troendelag, aes(color = occurrences), size = 1.5, fill = NA) +
+  scale_color_viridis_c(option = "viridis", begin = 0, end = 1, direction = -1) +  # continuous color scale
   ggtitle("Tr\u00F8ndelag") +
-  geom_text(data = specific_points8, aes(label = KOMMUNENAV, x = X, y = Y), size = 2.5, color = "black") +
   theme_bw() +
   theme(axis.title.x = element_blank(),  # Remove x-axis title
         axis.title.y = element_blank(),  # Remove y-axis title
@@ -356,27 +316,21 @@ troendelag_map <- ggplot() +
 
 print(troendelag_map)
 
+sum(intersect3_troendelag$occurrences)
+unique(intersect3_troendelag$originalScientificName)
+
 ####################### FINNMARK #######################################
 # Filter shp2 to include only the geometry for the county of interest
 shp2_finnmark <- shp2[shp2$FYLKESNAVN == "\"Finnmark - Finnm\u00E1rku - Finmarkku\"", ]
 intersect3_finnmark <- intersect3 %>%
   filter(FYLKESNAVN == "\"Finnmark - Finnm\u00E1rku - Finmarkku\"",)
 
-# Extract x and y coordinates from geometry column
-centroid_data9 <- st_centroid(shp2_finnmark)
-centroid_data9 <- cbind(centroid_data9, st_coordinates(centroid_data9))
-
-# Filter centroid_data9 to include only specific values of KOMMUNENAV
-specific_points9 <- centroid_data9[centroid_data9$KOMMUNENAV %in% c("Alta", "Nordkapp"), ]
-
 # Plot with labels
 finnmark_map <- ggplot() +
   geom_sf(data = shp2_finnmark, color = "gray30", size = 0.2, fill = NA) +
   geom_sf(data = intersect3_finnmark, aes(color = occurrences), size = 1, fill = NA) +
-  scale_fill_gradient(low = "green", high = "red") +
-  scale_color_gradient(low = "green", high = "red") +  # Adding color scale for points
+  scale_color_viridis_c(option = "viridis", begin = 0, end = 1, direction = -1) +  # continuous color scale
   ggtitle("Finnmark") +
-  geom_text(data = specific_points9, aes(label = KOMMUNENAV, x = X, y = Y), size = 3, color = "black") +
   theme_bw() +
   theme(axis.title.x = element_blank(),  # Remove x-axis title
         axis.title.y = element_blank(),  # Remove y-axis title
@@ -385,27 +339,21 @@ finnmark_map <- ggplot() +
 
 print(finnmark_map)
 
+sum(intersect3_finnmark$occurrences)
+unique(intersect3_finnmark$originalScientificName)
+
 ####################### AGDER #######################################
 # Filter shp2 to include only the geometry for the county of interest
 shp2_agder <- shp2[shp2$FYLKESNAVN == "Agder", ]
 intersect3_agder <- intersect3 %>%
   filter(FYLKESNAVN == "Agder",)
 
-# Extract x and y coordinates from geometry column
-centroid_data10 <- st_centroid(shp2_agder)
-centroid_data10 <- cbind(centroid_data10, st_coordinates(centroid_data10))
-
-# Filter centroid_data10 to include only specific values of KOMMUNENAV
-specific_points10 <- centroid_data10[centroid_data10$KOMMUNENAV %in% c("Kristiansand", "Tvedestrand"), ]
-
 # Plot with labels
 agder_map <- ggplot() +
   geom_sf(data = shp2_agder, color = "gray30", size = 0.2, fill = NA) +
   geom_sf(data = intersect3_agder, aes(color = occurrences), size = 1, fill = NA) +
-  scale_fill_gradient(low = "green", high = "red") +
-  scale_color_gradient(low = "green", high = "red") +  # Adding color scale for points
+  scale_color_viridis_c(option = "viridis", begin = 0, end = 1, direction = -1) +  # continuous color scale
   ggtitle("Agder") +
-  geom_text(data = specific_points10, aes(label = KOMMUNENAV, x = X, y = Y), size = 3, color = "black") +
   theme_bw() +
   theme(axis.title.x = element_blank(),  # Remove x-axis title
         axis.title.y = element_blank(),  # Remove y-axis title
@@ -414,27 +362,21 @@ agder_map <- ggplot() +
 
 print(agder_map)
 
+sum(intersect3_agder$occurrences)
+unique(intersect3_agder$originalScientificName)
+
 ####################### TELEMARK #######################################
 # Filter shp2 to include only the geometry for the county of interest
 shp2_telemark <- shp2[shp2$FYLKESNAVN == "Telemark", ]
 intersect3_telemark <- intersect3 %>%
   filter(FYLKESNAVN == "Telemark",)
 
-# Extract x and y coordinates from geometry column
-centroid_data11 <- st_centroid(shp2_telemark)
-centroid_data11 <- cbind(centroid_data11, st_coordinates(centroid_data11))
-
-# Filter centroid_data11 to include only specific values of KOMMUNENAV
-specific_points11 <- centroid_data11[centroid_data11$KOMMUNENAV %in% c("Skien", "Krager\u00F8"), ]
-
 # Plot with labels
 telemark_map <- ggplot() +
   geom_sf(data = shp2_telemark, color = "gray30", size = 0.2, fill = NA) +
   geom_sf(data = intersect3_telemark, aes(color = occurrences), size = 1, fill = NA) +
-  scale_fill_gradient(low = "green", high = "red") +
-  scale_color_gradient(low = "green", high = "red") +  # Adding color scale for points
+  scale_color_viridis_c(option = "viridis", begin = 0, end = 1, direction = -1) +  # continuous color scale
   ggtitle("Telemark") +
-  geom_text(data = specific_points11, aes(label = KOMMUNENAV, x = X, y = Y), size = 3, color = "black") +
   theme_bw() +
   theme(axis.title.x = element_blank(),  # Remove x-axis title
         axis.title.y = element_blank(),  # Remove y-axis title
@@ -443,27 +385,21 @@ telemark_map <- ggplot() +
 
 print(telemark_map)
 
+sum(intersect3_telemark$occurrences)
+unique(intersect3_telemark$originalScientificName)
+
 ####################### VESTFOLD #######################################
 # Filter shp2 to include only the geometry for the county of interest
 shp2_vestfold <- shp2[shp2$FYLKESNAVN == "Vestfold", ]
 intersect3_vestfold <- intersect3 %>%
   filter(FYLKESNAVN == "Vestfold",)
 
-# Extract x and y coordinates from geometry column
-centroid_data12 <- st_centroid(shp2_vestfold)
-centroid_data12 <- cbind(centroid_data12, st_coordinates(centroid_data12))
-
-# Filter centroid_data12 to include only specific values of KOMMUNENAV
-specific_points12 <- centroid_data12[centroid_data12$KOMMUNENAV %in% c("Sandefjord", "T\u00F8nsberg"), ]
-
 # Plot with labels
 vestfold_map <- ggplot() +
   geom_sf(data = shp2_vestfold, color = "gray30", size = 0.2, fill = NA) +
   geom_sf(data = intersect3_vestfold, aes(color = occurrences), size = 1, fill = NA) +
-  scale_fill_gradient(low = "green", high = "red") +
-  scale_color_gradient(low = "green", high = "red") +  # Adding color scale for points
+  scale_color_viridis_c(option = "viridis", begin = 0, end = 1, direction = -1) +  # continuous color scale
   ggtitle("Vestfold") +
-  geom_text(data = specific_points12, aes(label = KOMMUNENAV, x = X, y = Y), size = 3, color = "black") +
   theme_bw() +
   theme(axis.title.x = element_blank(),  # Remove x-axis title
         axis.title.y = element_blank(),  # Remove y-axis title
@@ -472,24 +408,22 @@ vestfold_map <- ggplot() +
 
 print(vestfold_map)
 
+sum(intersect3_vestfold$occurrences)
+unique(intersect3_vestfold$originalScientificName)
+
 ####################### BUSKERUD #######################################
 # Filter shp2 to include only the geometry for the county of interest
 shp2_buskerud <- shp2[shp2$FYLKESNAVN == "Buskerud", ]
 intersect3_buskerud <- intersect3 %>%
   filter(FYLKESNAVN == "Buskerud",)
 
-# Extract x and y coordinates from geometry column
-centroid_data13 <- st_centroid(shp2_buskerud)
-centroid_data13 <- cbind(centroid_data13, st_coordinates(centroid_data13))
 
 # Plot with labels
 buskerud_map <- ggplot() +
   geom_sf(data = shp2_buskerud, color = "gray30", size = 0.2, fill = NA) +
   geom_sf(data = intersect3_buskerud, aes(color = occurrences), size = 1, fill = NA) +
-  scale_fill_gradient(low = "green", high = "red") +
-  scale_color_gradient(low = "green", high = "red") +  # Adding color scale for points
+  scale_color_viridis_c(option = "viridis", begin = 0, end = 1, direction = -1) +  # continuous color scale
   ggtitle("Buskerud") +
-  geom_text(data = centroid_data13, aes(label = KOMMUNENAV, x = X, y = Y), size = 3, color = "black") +
   theme_bw() +
   theme(axis.title.x = element_blank(),  # Remove x-axis title
         axis.title.y = element_blank(),  # Remove y-axis title
@@ -498,35 +432,50 @@ buskerud_map <- ggplot() +
 
 print(buskerud_map)
 
+sum(intersect3_buskerud$occurrences)
+unique(intersect3_buskerud$originalScientificName)
+
 ####################### OSLO #######################################
 # Filter shp2 to include only the geometry for the county of interest
 shp2_oslo <- shp2[shp2$FYLKESNAVN == "Oslo", ]
 intersect3_oslo <- intersect3 %>%
   filter(FYLKESNAVN == "Oslo",)
 
-# Extract x and y coordinates from geometry column
-centroid_data14 <- st_centroid(shp2_oslo)
-centroid_data14 <- cbind(centroid_data14, st_coordinates(centroid_data14))
+# Plot with labels
+oslo_map1 <- ggplot() +
+  geom_sf(data = shp2_oslo, color = "gray30", size = 0.2, fill = NA) +
+  geom_sf(data = intersect3_oslo, aes(color = originalScientificName), size = 1.5, fill = NA) + 
+  ggtitle("Oslo") +
+  theme_bw() +
+  theme(axis.title.x = element_blank(),  # Remove x-axis title
+        axis.title.y = element_blank(),  # Remove y-axis title
+        plot.title.position = "panel",  # Position the title centered above the plot
+        plot.title = element_text(hjust = 0.5)  # Center the title text
+)
+
+print(oslo_map1)
 
 # Plot with labels
 oslo_map <- ggplot() +
   geom_sf(data = shp2_oslo, color = "gray30", size = 0.2, fill = NA) +
-  geom_sf(data = intersect3_oslo, aes(color = occurrences), size = 1, fill = NA) +
-  scale_fill_gradient(low = "green", high = "red") +
-  scale_color_gradient(low = "green", high = "red") +  # Adding color scale for points
+  geom_sf(data = intersect3_oslo, aes(color = occurrences), size = 1.5) +
+  scale_color_viridis_c(option = "viridis", begin = 0, end = 1, direction = -1) +  # continuous color scale
   ggtitle("Oslo") +
-  geom_text(data = centroid_data14, aes(label = KOMMUNENAV, x = X, y = Y), size = 3, color = "black") +
   theme_bw() +
-  theme(axis.title.x = element_blank(),  # Remove x-axis title
-        axis.title.y = element_blank(),  # Remove y-axis title
-        plot.title.position = "plot",  # Position the title centered above the plot
-        plot.title = element_text(hjust = 0.5))  # Center the title text
+  theme(
+    axis.title.x = element_blank(),  # Remove x-axis title
+    axis.title.y = element_blank(),  # Remove y-axis title
+    plot.title.position = "panel",  # Position the title centered above the plot
+    plot.title = element_text(hjust = 0.5)  # Center the title text
+  )
 
 print(oslo_map)
 
+sum(intersect3_oslo$occurrences)
+unique(intersect3_oslo$originalScientificName)
+
 ################################### STATISTICS #######################################################
 library(ggplot2)
-library(patchwork)
 library(cowplot)  # Load the cowplot package for arranging plots
 
 # Set up the grid of plots for each region
@@ -559,6 +508,7 @@ plot_grid(
   nrow =1 , byrow = TRUE,
   align = "h", axis = "l"
 )
+
  plot_grid(
  akershus_map, oestfold_map,
    nrow = 1, byrow = TRUE,
@@ -568,7 +518,7 @@ plot_grid(
 library(worrms) # (https://www.marinespecies.org/)
 
 #synonyms <- wm_synonyms_(id = c(aphiaIDs)) # Synonyms, do any overlap with the scientific name given with AphiaID
-#print(synonyms)
+#print(synonyms)'
 
 # Summarizing by classification
 aphiaIDs <- unique(intersect3$aphiaID)
@@ -582,24 +532,11 @@ spp_taxa <- aphia_classification %>%
   filter(rank == "Species") %>%
   group_by(scientificname, AphiaID) %>%
   summarize(occurrences = n())
-print(spp_taxa) # 2,551 unique species names 
+print(spp_taxa) # 2,551 unique species names, includes birds
 
-# Write the list of species to an Excel file
+# Write the list of species to an Excel file (includes birds)
 library(openxlsx)
 spp_xlsx <- write.xlsx(spp_taxa, 'spp_taxa.xlsx')
-
-kingdom_taxa <- aphia_classification %>%
-  filter(rank == "Kingdom") %>%
-  group_by(scientificname, AphiaID) %>%
-  summarize(occurrences = n())
-print(kingdom_taxa)
-
-# Summarize by Class
-class_taxa <- aphia_classification %>%
-  filter(rank == "Class") %>%
-  group_by(scientificname, AphiaID) %>%
-  summarize(occurrences = n())
-print(class_taxa) # does not include NA
 
 unique(intersect3$class)
 taxa_by_class <- intersect3 %>%
@@ -607,54 +544,35 @@ taxa_by_class <- intersect3 %>%
   summarize(total_occurrences = sum(occurrences, na.rm = TRUE))
 print(taxa_by_class) # includes NA
 
-sum(taxa_by_class$total_occurrences) # 380,104
+sum(taxa_by_class$total_occurrences) # 136,945
 
 # Calculate the ratio of each class versus the total sum of occurrences
-total_sum_by_class <- sum(taxa_by_class$total_occurrences) # Total sum of occurrences ; 380,104
+total_sum_by_class <- sum(taxa_by_class$total_occurrences) # Total sum of occurrences ; 135,945
 
 percentage_occ_per_class <- taxa_by_class %>%
   mutate(percentage = sprintf("%.5f%%", (total_occurrences / total_sum_by_class * 100)))
 print(percentage_occ_per_class) # percentage column says what percent of the total is each class
-sum(percentage_occ_per_class$total_occurrences) # 380,104
-
-
-# Doing the same thing as above, but excluding class Aves
-# Summarize by Class
-class_taxa_ex_aves <- aphia_classification %>%
-  filter(rank == "Class" & scientificname != "Aves") %>%
-  group_by(scientificname, AphiaID) %>%
-  summarize(occurrences = n())
-print(class_taxa_ex_aves) # does not include NA
- 
-taxa_by_class_ex_aves <- intersect3 %>%
-  group_by(class != "Aves") %>%
-  summarize(total_occurrences = sum(occurrences, na.rm = TRUE))
-print(taxa_by_class_ex_aves) # False = 238,713 True = 136,972 NA = 4419
-
-taxa_by_class_ex_aves1 <- intersect3 %>%
-  filter(!is.na(class) & class != "Aves") %>%
-  group_by(class) %>%
-  summarize(total_occurrences = sum(occurrences, na.rm = TRUE))
+sum(percentage_occ_per_class$total_occurrences) # 136,945
 
 # Add a separate row for NA values and bind them to the table
 na_row <- intersect3 %>%
   filter(is.na(class)) %>%
   summarize(total_occurrences = sum(occurrences, na.rm = TRUE), class = "NA")
-taxa_by_class_ex_aves1 <- bind_rows(taxa_by_class_ex_aves1, na_row)
-print(taxa_by_class_ex_aves1)
+taxa_by_class1 <- bind_rows(taxa_by_class, na_row)
+print(taxa_by_class)
 
 # Calculate the ratio of each class (excluding Aves) versus the total sum of occurrences (excluding Aves)
-total_sum_by_class_ex_aves <- sum(taxa_by_class_ex_aves1$total_occurrences) # Total sum of occurrences
+total_sum_by_class <- sum(taxa_by_class$total_occurrences) # Total sum of occurrences
 
-percentage_occ_per_class_ex_aves <- taxa_by_class_ex_aves1 %>%
-  mutate(percentage = sprintf("%.5f%%", (total_occurrences / total_sum_by_class_ex_aves) * 100))
-print(percentage_occ_per_class_ex_aves) # percentage column says what percent of the total is each class
-sum(percentage_occ_per_class_ex_aves$total_occurrences) # 141,391
+percentage_occ_per_class <- taxa_by_class1 %>%
+  mutate(percentage = sprintf("%.5f%%", (total_occurrences / total_sum_by_class) * 100))
+print(percentage_occ_per_class) # percentage column says what percent of the total is each class
+sum(percentage_occ_per_class$total_occurrences) # 136,945
 
 
 # Returns the data into a format for latex, using kableExtra
 library(kableExtra)
-kable(percentage_occ_per_class_ex_aves, "latex", file = "Percentage_occ_per_class_ex_aves.tex")
+kable(percentage_occ_per_class, "latex", file = "Percentage_occ_per_class.tex")
 
 #WHAT I WANT TO DO IS RUN THE APHIAID FOR SPECIES NAMES AND THEN RUN THAT LIST USING THE IUCN PACAKGE AGAINST THE IUCN RED LIST DATA TO FIND ANY ENDANGERED SPECIES
 aphia_names <- wm_id2name_(aphiaIDs)
@@ -665,17 +583,15 @@ library(rredlist) #I need to generate a token to use the IUCN API but the websit
 
 # Print NA/missing information of intersect3
 indices_with_na <- which(colSums(is.na(intersect3)) > 0)
-print(indices_with_na) #family; class; phylum; kingdom; REF
+print(indices_with_na) #family; REF
 
 # Print the number of NA values in each column
 for (i in indices_with_na) {
   cat("Column", i, "has", sum(is.na(intersect3[, i])), "NA values.\n")
 }
 
-# Column 5 has 1941 NA values. - Family
-# Column 6 has 644 NA values. - Class
-# Column 7 has 19 NA values. - Phylum
-# Column 8 has 1 NA values. - Kingdom
+# Column 5 has 1546 NA values. - Family
+# Column 22 has 13799 NA values. - REF
 
 # Print NA/missing information of intersect3
 indices_with_na <- which(rowSums(is.na(intersect3)) > 0)
@@ -683,7 +599,7 @@ print(indices_with_na)
 
 # Print the number of NA values in each row
 for (i in indices_with_na) {
-  cat("Row", i, "has", sum(is.na(intersect3[i, ])), "NA values.\n")
+  cat("Row", i, "has", sum(is.na(intersect3[i, ])), "NA values.\n") # Lists every row with an NA value (18,397 rows)
 }
 
 any(is.na(intersect3$originalScientificName)) # FALSE
@@ -694,81 +610,56 @@ intersect3_no_na <- intersect3[, !names(intersect3) %in% c("REF")]
 
 # Find rows with NA values by comparing row counts
 rows_with_na <- nrow(intersect3) - nrow(intersect3_no_na)
-print(rows_with_na)
+print(rows_with_na) # 0
 
 #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% SUMMARIZE OCCURRENCES
 
-# Count the number of occurrences of each species within each county
-#group_sum <- map_occ_joined_clip1 %>%
-#  group_by(FYLKESNAVN, KOMMUNENAV, genus, aphiaID) %>%
-#  summarize(occurrences = n())
-#View(group_sum)
+sum(intersect3$occurrences) #136,945
+
+length(unique(intersect3$originalScientificName)) # 3737
 
 # % of occurrences for each county compared to sum of total occurrences
-occurence_ratios <- c(
-  (sum(intersect3_finnmark$occurrences) / sum(intersect3$occurrences)), #7.96624082
-  (sum(intersect3_moere$occurrences) / sum(intersect3$occurrences)), #11.92463115
-  (sum(intersect3_nordland$occurrences) / sum(intersect3$occurrences)), #14.35317703
-  (sum(intersect3_troms$occurrences) / sum(intersect3$occurrences)), #6.64739124
-  (sum(intersect3_troendelag$occurrences) / sum(intersect3$occurrences)), #17.71331004
-  (sum(intersect3_agder$occurrences) / sum(intersect3$occurrences)), #13.87778082
-  (sum(intersect3_akershus$occurrences) / sum(intersect3$occurrences)), #1.17467851
-  (sum(intersect3_buskerud$occurrences) / sum(intersect3$occurrences)), #0.01026035
-  (sum(intersect3_oslo$occurrences) / sum(intersect3$occurrences)), #0.13759392 
-  (sum(intersect3_rogaland$occurrences) / sum(intersect3$occurrences)), #8.46557784
-  (sum(intersect3_telemark$occurrences) / sum(intersect3$occurrences)), #3.50351483
-  (sum(intersect3_vestfold$occurrences) / sum(intersect3$occurrences)), #2.90210048
-  (sum(intersect3_vestland$occurrences) / sum(intersect3$occurrences)), #9.15933534
-  (sum(intersect3_oestfold$occurrences) / sum(intersect3$occurrences)) #2.16440764
+occurrence_ratios <- c(
+  (sum(intersect3_finnmark$occurrences) / sum(intersect3$occurrences)),
+  (sum(intersect3_moere$occurrences) / sum(intersect3$occurrences)), 
+  (sum(intersect3_nordland$occurrences) / sum(intersect3$occurrences)),
+  (sum(intersect3_troms$occurrences) / sum(intersect3$occurrences)),
+  (sum(intersect3_troendelag$occurrences) / sum(intersect3$occurrences)),
+  (sum(intersect3_agder$occurrences) / sum(intersect3$occurrences)),
+  (sum(intersect3_akershus$occurrences) / sum(intersect3$occurrences)), 
+  (sum(intersect3_buskerud$occurrences) / sum(intersect3$occurrences)), 
+  (sum(intersect3_oslo$occurrences) / sum(intersect3$occurrences)), 
+  (sum(intersect3_rogaland$occurrences) / sum(intersect3$occurrences)),
+  (sum(intersect3_telemark$occurrences) / sum(intersect3$occurrences)), 
+  (sum(intersect3_vestfold$occurrences) / sum(intersect3$occurrences)), 
+  (sum(intersect3_vestland$occurrences) / sum(intersect3$occurrences)), 
+  (sum(intersect3_oestfold$occurrences) / sum(intersect3$occurrences))
   )
-print(ratios)
+print(occurrence_ratios)
+# Format the ratios as percentages
+occ_percentage <- percent(occurrence_ratios, 2)
+print(occ_percentage)
 
-# Relative shape area comparisons so that the percentage of occ data can be compared to size
-#Shape Areas are connected with KOMMUNENAV
-  areas <- intersect3 %>%
-  group_by(FYLKESNAVN, Shape_Area, KOMMUNENAV,) %>%
-  summarize(occurrences = sum(occurrences))
-View(areas)
-
-# Sum all municipalities and municipality shape areas to each county based on "areas"
-sum_areas <- areas %>%
-  group_by(FYLKESNAVN) %>%
-  summarize(
-    Total_Shape_Area = sum(Shape_Area)
-  )
-print(sum_areas)
-
-# Sum all municipality water areas to create total area of water
-total_area <- sum(sum_areas$Total_Shape_Area)
-print(total_area) #153 623 111 806 meters sq.
-area_sqkm <- sum_areas %>%
-  mutate(area_sqkm = Total_Shape_Area / 1e6)
-print(area_sqkm)
-
+sum(unique(intersect3$area_fylk)) # 153,463.3 sq. km
 # Calculate the proportion relative to the total area
 size_ratios <- c(
-                (sum_areas$Total_Shape_Area[sum_areas$FYLKESNAVN == "\"Finnmark - Finnm\u00E1rku - Finmarkku\""] / total_area) , #17.26945060
-                (sum_areas$Total_Shape_Area[sum_areas$FYLKESNAVN == "\"M\u00F8re og Romsdal\""] / total_area), #7.80632499
-                (sum_areas$Total_Shape_Area[sum_areas$FYLKESNAVN == "\"Nordland - Nordl\u00E1nnda\""] / total_area), #28.78974072
-                (sum_areas$Total_Shape_Area[sum_areas$FYLKESNAVN == "\"Troms - Romsa - Tromssa\""] / total_area), #10.64847636
-                (sum_areas$Total_Shape_Area[sum_areas$FYLKESNAVN == "\"Tr\u00F8ndelag - Tr\u00F6\u00F6ndelage\""] / total_area), #12.15463663
-                (sum_areas$Total_Shape_Area[sum_areas$FYLKESNAVN == "Agder"] / total_area), #4.40917097
-                (sum_areas$Total_Shape_Area[sum_areas$FYLKESNAVN == "Akershus"] / total_area), #0.20498357
-                (sum_areas$Total_Shape_Area[sum_areas$FYLKESNAVN == "Buskerud"] / total_area), #0.02809141
-                (sum_areas$Total_Shape_Area[sum_areas$FYLKESNAVN == "Oslo"] / total_area), #0.01615758
-                (sum_areas$Total_Shape_Area[sum_areas$FYLKESNAVN == "Rogaland"] / total_area), #4.92925757
-                (sum_areas$Total_Shape_Area[sum_areas$FYLKESNAVN == "Telemark"] / total_area), #0.61120755
-                (sum_areas$Total_Shape_Area[sum_areas$FYLKESNAVN == "Vestfold"] / total_area), #1.25236596
-                (sum_areas$Total_Shape_Area[sum_areas$FYLKESNAVN == "Vestland"] / total_area), #11.27418401
-                (sum_areas$Total_Shape_Area[sum_areas$FYLKESNAVN == "\u00D8stfold"] / total_area) #0.60595208
+  (unique(intersect3$area_fylk[intersect3$FYLKESNAVN == "\"Finnmark - Finnm\u00E1rku - Finmarkku\""]) / sum(unique(intersect3$area_fylk))),
+  (unique(intersect3$area_fylk[intersect3$FYLKESNAVN == "\"M\u00F8re og Romsdal\""]) / sum(unique(intersect3$area_fylk))),
+  (unique(intersect3$area_fylk[intersect3$FYLKESNAVN == "\"Nordland - Nordl\u00E1nnda\""]) / sum(unique(intersect3$area_fylk))),
+  (unique(intersect3$area_fylk[intersect3$FYLKESNAVN == "\"Troms - Romsa - Tromssa\""]) / sum(unique(intersect3$area_fylk))),
+  (unique(intersect3$area_fylk[intersect3$FYLKESNAVN == "\"Tr\u00F8ndelag - Tr\u00F6\u00F6ndelage\""]) / sum(unique(intersect3$area_fylk))),
+  (unique(intersect3$area_fylk[intersect3$FYLKESNAVN == "Agder"]) / sum(unique(intersect3$area_fylk))),
+  (unique(intersect3$area_fylk[intersect3$FYLKESNAVN == "Akershus"]) / sum(unique(intersect3$area_fylk))),
+  (unique(intersect3$area_fylk[intersect3$FYLKESNAVN == "Buskerud"]) / sum(unique(intersect3$area_fylk))),
+  (unique(intersect3$area_fylk[intersect3$FYLKESNAVN == "Oslo"]) / sum(unique(intersect3$area_fylk))),
+  (unique(intersect3$area_fylk[intersect3$FYLKESNAVN == "Rogaland"]) / sum(unique(intersect3$area_fylk))),
+  (unique(intersect3$area_fylk[intersect3$FYLKESNAVN == "Telemark"]) / sum(unique(intersect3$area_fylk))),
+  (unique(intersect3$area_fylk[intersect3$FYLKESNAVN == "Vestfold"]) / sum(unique(intersect3$area_fylk))),
+  (unique(intersect3$area_fylk[intersect3$FYLKESNAVN == "Vestland"]) / sum(unique(intersect3$area_fylk))),
+  (unique(intersect3$area_fylk[intersect3$FYLKESNAVN == "\u00D8stfold"]) / sum(unique(intersect3$area_fylk)))
 )                 
-print(size_ratios) #total_shape_area in sq m
-
-# library(formattable)
-
+print(size_ratios) # in sq km
 # Format the ratios as percentages
-occurrence_percentage <- percent(occurence_ratios, 2)
-print(occurrence_percentage)
 size_percentage <- percent(size_ratios, 2)
 print(size_percentage)
 
@@ -777,13 +668,18 @@ by_county_occ_sum <- intersect3 %>%
   summarize(occurrences = sum(occurrences))
 print(by_county_occ_sum)
 
+by_county_area_sum <- intersect3 %>%
+  group_by(FYLKESNAVN) %>%
+  summarize(area_fylk = unique(area_fylk))
+print(by_county_area_sum)
+
 # Create a summary table 
 summary_table <- data.frame(
-  FYLKESNAVN = sum_areas$FYLKESNAVN,
-  area_sqkm = area_sqkm$area_sqkm, # Using area_sqkm directly
-  size_percentage = size_percentage, # Include the size percentage directly
+  FYLKESNAVN = (by_county_area_sum$FYLKESNAVN),
   Total_Occurrences = (by_county_occ_sum$occurrences),
-  occurrence_percentage = occurrence_percentage # Include the occurrence percentage directly
+  Percent_Occurrences = (occ_percentage),
+  County_Size = (by_county_area_sum$area_fylk),
+  Percent_Size = (size_percentage)
 )
 print(summary_table)
 
@@ -1205,14 +1101,112 @@ lob_con_percent <- c(0.07721415,  3.08883530,  0.00864787, 28.67519468 , 0.49820
 lob_con_percent <- paste0(round(lob_con_percent, 2), "%")
 print(lob_con_percent)
 
+# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% WEIRD PLOTTING STUFF
+library(sf)
 
-merged_table <- Reduce(function(x, y) merge(x, y, by = "FYLKESNAVN", all = TRUE), list(tare_ref_omr_ratios, tare_ratios, korall_forbudsomr_ratios,))
+class(intersect3_oslo)
+class(intersect3_oslo$geometry)
 
-# Replace missing values (NAs) with "-"
-merged_table[is.na(merged_table)] <- "-"
+recast <- st_as_sf(intersect3_oslo)
+class(recast)
+print(recast)
+class(recast$geometry)
 
-# View the merged table
-print(merged_table)
+geom_recast <- recast %>%
+  st_as_sf(wkt = "geometry") %>%
+  st_coordinates(geometry) %>%
+  as.data.frame() %>%
+  rename(longitude = X, latitude = Y) %>%
+  st_as_sf(coords = c("longitude", "latitude"), crs = "EPSG:4326")
+
+
+
+library(sf)
+library(dplyr)
+
+# Step 1: Convert WKT strings to sf objects
+recast <- intersect3_oslo %>%
+  as.data.frame() %>%
+  st_as_sf( wkt = "geometry") %>%
+  st_transform(crs = 4326) %>%
+  st_cast(recast,"POINT") %>%
+  rename(longitude = X, latitude = Y) %>%
+  st_as_sf(coords = c("longitude", "latitude"), crs = 4326)
+
+
+# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% GRID
+sum(intersect3$occurrences)
+library(tidyverse)
+library(sf)
+library(raster)
+library(ggplot2)
+library(stringr)
+
+
+bbox <- st_bbox(shp2_oslo)
+
+# Create a grid with cells of 10m x 10m
+grid_10m <- st_make_grid(shp2_oslo, cellsize = c(10, 10), what = "polygons")
+
+# Convert the grid polygons to the same CRS as your occurrence data
+grid_10m <- st_transform(grid_10m, st_crs(intersect3_oslo))
+
+grid_10m <- st_as_sf(grid_1m)
+
+# Perform spatial join to count occurrences per grid cell
+grid_with_counts <- st_join(grid_10m, intersect3_oslo, left = FALSE)
+
+# Aggregate counts by grid cell
+grid_counts <- as.data.frame(table(grid_with_counts$geometry))
+
+# Rename columns for clarity
+colnames(grid_counts) <- c("grid_cell", "occurrence_count")
+
+
+oslo_map_with_grid <- ggplot() +
+  geom_sf(data = shp2_oslo, color = "gray30", size = 0.2, fill = NA) +
+  geom_sf(data = intersect3_oslo, aes(color = occurrences), size = 1.5, fill = NA) +
+  scale_fill_gradient(low = "blue", high = "red") +
+  scale_color_gradient(low = "blue", high = "red") +  # Adding color scale for points
+  ggtitle("Oslo") +
+  theme_bw() +
+  theme(axis.title.x = element_blank(),  # Remove x-axis title
+        axis.title.y = element_blank(),  # Remove y-axis title
+        plot.title.position = "plot",  # Position the title centered above the plot
+        plot.title = element_text(hjust = 0.5),  # Center the title text
+        panel.grid.major = element_line(color = "black", linewidth = 0.1),
+        panel.background = element_rect(fill = NA),
+        panel.ontop = TRUE
+  )
+
+print(oslo_map_with_grid)
+
+# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% DEPTH
+
+map_occ_joined_clip3 <- map_occ_joined_clip1 %>%
+  group_by(FYLKESNAVN, originalScientificName, depth) %>%
+  summarize(occurrences = n())
+View(map_occ_joined_clip3)
+
+intersect4 <- st_intersection(map_occ_joined_clip3, shp2)
+
+# Plot the depth data for the occurrences
+depth <- ggplot() +
+  geom_sf(data = shp2) +
+  geom_sf(data = intersect4, aes(color = depth)) +
+  scale_fill_gradient(low = "orange", high = "blue") +
+  scale_color_gradient(low = "orange", high = "blue") +  # Adding color scale for points
+  theme_bw() +
+  theme(axis.title.x = element_blank(),  # Remove x-axis title
+        axis.title.y = element_blank(),  # Remove y-axis title
+        plot.title.position = "plot",  # Position the title centered above the plot
+        plot.title = element_text(hjust = 0.5))  # Center the title text
+
+print(depth)
+
+# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% YEAR
+
+
 
 ######################### Checks & Notes ##################################
 
@@ -1221,16 +1215,12 @@ print(merged_table)
 
 # Notes from 30.04
 # Continue writing (articles that I found to read are in Thesis)
-# Finish introduction
-# Use notes from Friday 
-# Merge table of all ratios 
-
-# Notes from 25.04
-# take birds out from the top filtering
-# remake the composite plot
-# update methods
-
-#Notes from 24.04
-# finish running the ratios on the above shps. 
-# write methods and add all of the stuff from 23.04 and 24.04 to results
-# intro + move stuff to word ?
+# Species that are indicative of a habitat type.
+# Grid the county water and then use red green to mark what is there
+# Take into account
+# -occurrences interesting taxa or taxa indicative of a habitat
+# -habitat data (Mareano)
+# What basis do we have to design an mpa network from scratch. How much data is there and how is is distributed spatially.
+# Another use metric:
+#  Amount of water is being used ? (Bottom trawling, etc)
+# Or use a coastline by drawing a linear line
