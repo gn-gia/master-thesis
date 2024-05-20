@@ -57,10 +57,16 @@ map_ggplot(filtered_data1, color = "blue")
 library(sf)
 # Transform to sf object and set crs (EPSG:4326, WGS84)
 occ_sf <- st_as_sf(filtered_data1, coords = c("decimalLongitude", "decimalLatitude"))
+
+# Set CRS
 occ_sf <- st_set_crs(occ_sf, "EPSG:4326")
+
+# Add "decimalLongitude" and "decimalLatitude" as attributes
+occ_sf <- st_sf(occ_sf, decimalLongitude = filtered_data1$decimalLongitude, decimalLatitude = filtered_data1$decimalLatitude)
+
 print(occ_sf1 <- st_crs(occ_sf))
 class(occ_sf)
-
+View(occ_sf)
 # Read the shapefile into an sf object and set crs (EPSG:4326, WGS84)
 shp <- st_read("C:/Users/gngia/OneDrive/Documents/new obis/GIS/Kommuner_Fylker_Intersect.shp", stringsAsFactors=FALSE)
 shp <- st_transform(shp, crs = "EPSG:4326")
