@@ -18,6 +18,7 @@ install.packages("cowplot")
 install.packages("tidyverse")
 install.packages("rJava")
 install.packages("wicket")
+install.packages("scales")
 
 library(dplyr)
 library(ggplot2)
@@ -27,6 +28,7 @@ library(robis)
 library(patchwork)
 library(kableExtra)
 library(worrms)
+library(scales)
 
 
 # Occurrence Data: WKT string delimits polygon excluding Svalbard and Jan Mayen; Norway = 179 (Accessed 23.02.2024)
@@ -100,6 +102,8 @@ map_occ_joined_clip1 <- st_join(occ_sf, shp2)
 class(map_occ_joined_clip1)
 View(map_occ_joined_clip1)
 
+is.na(occ_sf$bathymetry)
+is.na(occ_sf$depth)
 # Group by 'FYLKESNAVN' and count distinct 'originalScientificName'
 map_occ__with_clip1 <- map_occ_joined_clip1 %>%
   group_by(FYLKESNAVN) %>%
@@ -107,7 +111,7 @@ map_occ__with_clip1 <- map_occ_joined_clip1 %>%
 View(map_occ_joined_clip1)
 
 map_occ_joined_clip2 <- map_occ_joined_clip1 %>%
-  group_by(FYLKESNAVN, aphiaID, originalScientificName, family, class, phylum, kingdom, area_fylk, basisOfRecord, year, decimalLongitude, decimalLatitude) %>%
+  group_by(FYLKESNAVN, aphiaID, originalScientificName, family, class, phylum, kingdom, area_fylk, basisOfRecord, year, decimalLongitude, decimalLatitude, depth,) %>%
   summarize(occurrences = n())
 View(map_occ_joined_clip2)
 
@@ -153,13 +157,63 @@ troms_map <-ggplot() +
   theme_bw() +
   theme(axis.title.x = element_blank(),  # Remove x-axis title
         axis.title.y = element_blank(),  # Remove y-axis title
-        plot.title.position = "plot",  # Position the title centered above the plot
+        plot.title.position = "panel",  # Position the title centered above the plot
         plot.title = element_text(hjust = 0.5))  # Center the title text
 
 print(troms_map)
 
 sum(intersect3_troms$occurrences)
 unique(intersect3_troms$originalScientificName)
+
+# CREATE GRID
+# Reproject shp2_troms to UTM zone 32N
+shp2_troms_utm <- st_transform(shp2_troms, crs = 25833)
+
+# Create fishnet function
+create_fishnet <- function(bbox, cell_size) {
+  x_coords <- seq(bbox["xmin"], bbox["xmax"], by = cell_size)
+  y_coords <- seq(bbox["ymin"], bbox["ymax"], by = cell_size)
+  
+  # Ensure the grid covers the entire extent
+  if (tail(x_coords, 1) < bbox["xmax"]) x_coords <- c(x_coords, bbox["xmax"])
+  if (tail(y_coords, 1) < bbox["ymax"]) y_coords <- c(y_coords, bbox["ymax"])
+  
+  grid <- expand.grid(x = x_coords, y = y_coords)
+  grid_sf <- st_as_sf(grid, coords = c("x", "y"), crs = st_crs(shp2_troms_utm))
+  
+  fishnet <- st_make_grid(grid_sf, cellsize = c(cell_size, cell_size), square = TRUE)
+  fishnet_sf <- st_sf(geometry = fishnet)
+  return(fishnet_sf)
+}
+
+# Create a fishnet grid of 2km by 2km over the extent of shp2_troms in UTM
+bbox_utm <- st_bbox(shp2_troms_utm)
+cell_size <- 5000  # 2km in meters
+
+fishnet_sf_utm <- create_fishnet(bbox_utm, cell_size)
+
+# Optionally, reproject the fishnet back to the original CRS
+fishnet_sf <- st_transform(fishnet_sf_utm, crs = st_crs(shp2_troms))
+
+# Plot with ggplot2
+fishnet_troms_map <- ggplot() +
+  geom_sf(data = shp2_troms_utm, color = "gray30", size = 0.2, fill = NA) +
+  geom_sf(data = intersect3_troms, aes(color = occurrences), size = 1.5) +
+  scale_color_viridis_c(option = "viridis", begin = 0, end = 1, direction = -1) +  # continuous color scale
+  
+  # Add the fishnet grid with black outlines
+  geom_sf(data = fishnet_sf, fill = NA, color = "black", size = 0.2) +
+  
+  ggtitle("Troms") +
+  theme_bw() +
+  theme(
+    axis.title.x = element_blank(),  # Remove x-axis title
+    axis.title.y = element_blank(),  # Remove y-axis title
+    plot.title.position = "panel",  # Position the title centered above the plot
+    plot.title = element_text(hjust = 0.5)  # Center the title text
+  )
+
+print(fishnet_troms_map)
 
 ####################### AKERSHUS #######################################
 # Filter shp2 to include only the geometry for the county of interest
@@ -176,13 +230,63 @@ akershus_map <- ggplot() +
   theme_bw() +
   theme(axis.title.x = element_blank(),  # Remove x-axis title
         axis.title.y = element_blank(),  # Remove y-axis title
-        plot.title.position = "plot",  # Position the title centered above the plot
+        plot.title.position = "panel",  # Position the title centered above the plot
         plot.title = element_text(hjust = 0.5))  # Center the title text
 
 print(akershus_map)
 
 sum(intersect3_akershus$occurrences)
 unique(intersect3_akershus$originalScientificName)
+
+# CREATE GRID
+# Reproject shp2_akershus to UTM zone 32N
+shp2_akershus_utm <- st_transform(shp2_akershus, crs = 25833)
+
+# Create fishnet function
+create_fishnet <- function(bbox, cell_size) {
+  x_coords <- seq(bbox["xmin"], bbox["xmax"], by = cell_size)
+  y_coords <- seq(bbox["ymin"], bbox["ymax"], by = cell_size)
+  
+  # Ensure the grid covers the entire extent
+  if (tail(x_coords, 1) < bbox["xmax"]) x_coords <- c(x_coords, bbox["xmax"])
+  if (tail(y_coords, 1) < bbox["ymax"]) y_coords <- c(y_coords, bbox["ymax"])
+  
+  grid <- expand.grid(x = x_coords, y = y_coords)
+  grid_sf <- st_as_sf(grid, coords = c("x", "y"), crs = st_crs(shp2_akershus_utm))
+  
+  fishnet <- st_make_grid(grid_sf, cellsize = c(cell_size, cell_size), square = TRUE)
+  fishnet_sf <- st_sf(geometry = fishnet)
+  return(fishnet_sf)
+}
+
+# Create a fishnet grid of 2km by 2km over the extent of shp2_akershus in UTM
+bbox_utm <- st_bbox(shp2_akershus_utm)
+cell_size <- 5000  # 2km in meters
+
+fishnet_sf_utm <- create_fishnet(bbox_utm, cell_size)
+
+# Optionally, reproject the fishnet back to the original CRS
+fishnet_sf <- st_transform(fishnet_sf_utm, crs = st_crs(shp2_akershus))
+
+# Plot with ggplot2
+fishnet_akershus_map <- ggplot() +
+  geom_sf(data = shp2_akershus_utm, color = "gray30", size = 0.2, fill = NA) +
+  geom_sf(data = intersect3_akershus, aes(color = occurrences), size = 1.5) +
+  scale_color_viridis_c(option = "viridis", begin = 0, end = 1, direction = -1) +  # continuous color scale
+  
+  # Add the fishnet grid with black outlines
+  geom_sf(data = fishnet_sf, fill = NA, color = "black", size = 0.2) +
+  
+  ggtitle("Akershus") +
+  theme_bw() +
+  theme(
+    axis.title.x = element_blank(),  # Remove x-axis title
+    axis.title.y = element_blank(),  # Remove y-axis title
+    plot.title.position = "panel",  # Position the title centered above the plot
+    plot.title = element_text(hjust = 0.5)  # Center the title text
+  )
+
+print(fishnet_akershus_map)
 
 ####################### MØRE OG ROMSDAL #######################################
 # Filter shp2 to include only the geometry for the county of interest
@@ -198,13 +302,63 @@ moere_map <- ggplot() +
   theme_bw()+
   theme(axis.title.x = element_blank(),  # Remove x-axis title
         axis.title.y = element_blank(),  # Remove y-axis title
-        plot.title.position = "plot",  # Position the title centered above the plot
+        plot.title.position = "panel",  # Position the title centered above the plot
         plot.title = element_text(hjust = 0.5))  # Center the title text
 
 print(moere_map)
 
 sum(intersect3_moere$occurrences)
 unique(intersect3_moere$originalScientificName)
+
+# CREATE GRID
+# Reproject shp2_moere to UTM zone 32N
+shp2_moere_utm <- st_transform(shp2_moere, crs = 25833)
+
+# Create fishnet function
+create_fishnet <- function(bbox, cell_size) {
+  x_coords <- seq(bbox["xmin"], bbox["xmax"], by = cell_size)
+  y_coords <- seq(bbox["ymin"], bbox["ymax"], by = cell_size)
+  
+  # Ensure the grid covers the entire extent
+  if (tail(x_coords, 1) < bbox["xmax"]) x_coords <- c(x_coords, bbox["xmax"])
+  if (tail(y_coords, 1) < bbox["ymax"]) y_coords <- c(y_coords, bbox["ymax"])
+  
+  grid <- expand.grid(x = x_coords, y = y_coords)
+  grid_sf <- st_as_sf(grid, coords = c("x", "y"), crs = st_crs(shp2_moere_utm))
+  
+  fishnet <- st_make_grid(grid_sf, cellsize = c(cell_size, cell_size), square = TRUE)
+  fishnet_sf <- st_sf(geometry = fishnet)
+  return(fishnet_sf)
+}
+
+# Create a fishnet grid of 2km by 2km over the extent of shp2_moere in UTM
+bbox_utm <- st_bbox(shp2_moere_utm)
+cell_size <- 5000  # 2km in meters
+
+fishnet_sf_utm <- create_fishnet(bbox_utm, cell_size)
+
+# Optionally, reproject the fishnet back to the original CRS
+fishnet_sf <- st_transform(fishnet_sf_utm, crs = st_crs(shp2_moere))
+
+# Plot with ggplot2
+fishnet_moere_map <- ggplot() +
+  geom_sf(data = shp2_moere_utm, color = "gray30", size = 0.2, fill = NA) +
+  geom_sf(data = intersect3_moere, aes(color = occurrences), size = 1.5) +
+  scale_color_viridis_c(option = "viridis", begin = 0, end = 1, direction = -1) +  # continuous color scale
+  
+  # Add the fishnet grid with black outlines
+  geom_sf(data = fishnet_sf, fill = NA, color = "black", size = 0.2) +
+  
+  ggtitle("M\u00F8re og Romsdal") +
+  theme_bw() +
+  theme(
+    axis.title.x = element_blank(),  # Remove x-axis title
+    axis.title.y = element_blank(),  # Remove y-axis title
+    plot.title.position = "panel",  # Position the title centered above the plot
+    plot.title = element_text(hjust = 0.5)  # Center the title text
+  )
+
+print(fishnet_moere_map)
 
 ####################### ØSTFOLD #######################################
 # Filter shp2 to include only the geometry for the county of interest
@@ -220,13 +374,63 @@ oestfold_map <- ggplot() +
   theme_bw() +
   theme(axis.title.x = element_blank(),  # Remove x-axis title
         axis.title.y = element_blank(),  # Remove y-axis title
-        plot.title.position = "plot",  # Position the title centered above the plot
+        plot.title.position = "panel",  # Position the title centered above the plot
         plot.title = element_text(hjust = 0.5))  # Center the title text
 
 print(oestfold_map)
 
 sum(intersect3_oestfold$occurrences)
 unique(intersect3_oestfold$originalScientificName)
+
+# CREATE GRID
+# Reproject shp2_oestfold to UTM zone 32N
+shp2_oestfold_utm <- st_transform(shp2_oestfold, crs = 25833)
+
+# Create fishnet function
+create_fishnet <- function(bbox, cell_size) {
+  x_coords <- seq(bbox["xmin"], bbox["xmax"], by = cell_size)
+  y_coords <- seq(bbox["ymin"], bbox["ymax"], by = cell_size)
+  
+  # Ensure the grid covers the entire extent
+  if (tail(x_coords, 1) < bbox["xmax"]) x_coords <- c(x_coords, bbox["xmax"])
+  if (tail(y_coords, 1) < bbox["ymax"]) y_coords <- c(y_coords, bbox["ymax"])
+  
+  grid <- expand.grid(x = x_coords, y = y_coords)
+  grid_sf <- st_as_sf(grid, coords = c("x", "y"), crs = st_crs(shp2_oestfold_utm))
+  
+  fishnet <- st_make_grid(grid_sf, cellsize = c(cell_size, cell_size), square = TRUE)
+  fishnet_sf <- st_sf(geometry = fishnet)
+  return(fishnet_sf)
+}
+
+# Create a fishnet grid of 2km by 2km over the extent of shp2_oestfold in UTM
+bbox_utm <- st_bbox(shp2_oestfold_utm)
+cell_size <- 5000  # 2km in meters
+
+fishnet_sf_utm <- create_fishnet(bbox_utm, cell_size)
+
+# Optionally, reproject the fishnet back to the original CRS
+fishnet_sf <- st_transform(fishnet_sf_utm, crs = st_crs(shp2_oestfold))
+
+# Plot with ggplot2
+fishnet_oestfold_map <- ggplot() +
+  geom_sf(data = shp2_oestfold_utm, color = "gray30", size = 0.2, fill = NA) +
+  geom_sf(data = intersect3_oestfold, aes(color = occurrences), size = 1.5) +
+  scale_color_viridis_c(option = "viridis", begin = 0, end = 1, direction = -1) +  # continuous color scale
+  
+  # Add the fishnet grid with black outlines
+  geom_sf(data = fishnet_sf, fill = NA, color = "black", size = 0.2) +
+  
+  ggtitle("\u00D8stfold") +
+  theme_bw() +
+  theme(
+    axis.title.x = element_blank(),  # Remove x-axis title
+    axis.title.y = element_blank(),  # Remove y-axis title
+    plot.title.position = "panel",  # Position the title centered above the plot
+    plot.title = element_text(hjust = 0.5)  # Center the title text
+  )
+
+print(fishnet_oestfold_map)
 
 ####################### VESTLAND #######################################
 # Filter shp2 to include only the geometry for the county of interest
@@ -243,13 +447,63 @@ vestland_map <- ggplot() +
   theme_bw() +
   theme(axis.title.x = element_blank(),  # Remove x-axis title
         axis.title.y = element_blank(),  # Remove y-axis title
-        plot.title.position = "plot",  # Position the title centered above the plot
+        plot.title.position = "panel",  # Position the title centered above the plot
         plot.title = element_text(hjust = 0.5))  # Center the title text
 
 print(vestland_map)
 
 sum(intersect3_vestland$occurrences)
 unique(intersect3_vestland$originalScientificName)
+
+# CREATE GRID
+# Reproject shp2_vestland to UTM zone 32N
+shp2_vestland_utm <- st_transform(shp2_vestland, crs = 25833)
+
+# Create fishnet function
+create_fishnet <- function(bbox, cell_size) {
+  x_coords <- seq(bbox["xmin"], bbox["xmax"], by = cell_size)
+  y_coords <- seq(bbox["ymin"], bbox["ymax"], by = cell_size)
+  
+  # Ensure the grid covers the entire extent
+  if (tail(x_coords, 1) < bbox["xmax"]) x_coords <- c(x_coords, bbox["xmax"])
+  if (tail(y_coords, 1) < bbox["ymax"]) y_coords <- c(y_coords, bbox["ymax"])
+  
+  grid <- expand.grid(x = x_coords, y = y_coords)
+  grid_sf <- st_as_sf(grid, coords = c("x", "y"), crs = st_crs(shp2_vestland_utm))
+  
+  fishnet <- st_make_grid(grid_sf, cellsize = c(cell_size, cell_size), square = TRUE)
+  fishnet_sf <- st_sf(geometry = fishnet)
+  return(fishnet_sf)
+}
+
+# Create a fishnet grid of 2km by 2km over the extent of shp2_vestland in UTM
+bbox_utm <- st_bbox(shp2_vestland_utm)
+cell_size <- 5000  # 2km in meters
+
+fishnet_sf_utm <- create_fishnet(bbox_utm, cell_size)
+
+# Optionally, reproject the fishnet back to the original CRS
+fishnet_sf <- st_transform(fishnet_sf_utm, crs = st_crs(shp2_vestland))
+
+# Plot with ggplot2
+fishnet_vestland_map <- ggplot() +
+  geom_sf(data = shp2_vestland_utm, color = "gray30", size = 0.2, fill = NA) +
+  geom_sf(data = intersect3_vestland, aes(color = occurrences), size = 1.5) +
+  scale_color_viridis_c(option = "viridis", begin = 0, end = 1, direction = -1) +  # continuous color scale
+  
+  # Add the fishnet grid with black outlines
+  geom_sf(data = fishnet_sf, fill = NA, color = "black", size = 0.2) +
+  
+  ggtitle("Vestland") +
+  theme_bw() +
+  theme(
+    axis.title.x = element_blank(),  # Remove x-axis title
+    axis.title.y = element_blank(),  # Remove y-axis title
+    plot.title.position = "panel",  # Position the title centered above the plot
+    plot.title = element_text(hjust = 0.5)  # Center the title text
+  )
+
+print(fishnet_vestland_map)
 
 ####################### NORDLAND #######################################
 # Filter shp2 to include only the geometry for the county of interest
@@ -265,13 +519,63 @@ nordland_map <- ggplot() +
   theme_bw() +
   theme(axis.title.x = element_blank(),  # Remove x-axis title
         axis.title.y = element_blank(),  # Remove y-axis title
-        plot.title.position = "plot",  # Position the title centered above the plot
+        plot.title.position = "panel",  # Position the title centered above the plot
         plot.title = element_text(hjust = 0.5))  # Center the title text
 
 print(nordland_map)
 
 sum(intersect3_nordland$occurrences)
 unique(intersect3_nordland$originalScientificName)
+
+# CREATE GRID
+# Reproject shp2_nordland to UTM zone 32N
+shp2_nordland_utm <- st_transform(shp2_nordland, crs = 25833)
+
+# Create fishnet function
+create_fishnet <- function(bbox, cell_size) {
+  x_coords <- seq(bbox["xmin"], bbox["xmax"], by = cell_size)
+  y_coords <- seq(bbox["ymin"], bbox["ymax"], by = cell_size)
+  
+  # Ensure the grid covers the entire extent
+  if (tail(x_coords, 1) < bbox["xmax"]) x_coords <- c(x_coords, bbox["xmax"])
+  if (tail(y_coords, 1) < bbox["ymax"]) y_coords <- c(y_coords, bbox["ymax"])
+  
+  grid <- expand.grid(x = x_coords, y = y_coords)
+  grid_sf <- st_as_sf(grid, coords = c("x", "y"), crs = st_crs(shp2_nordland_utm))
+  
+  fishnet <- st_make_grid(grid_sf, cellsize = c(cell_size, cell_size), square = TRUE)
+  fishnet_sf <- st_sf(geometry = fishnet)
+  return(fishnet_sf)
+}
+
+# Create a fishnet grid of 2km by 2km over the extent of shp2_nordland in UTM
+bbox_utm <- st_bbox(shp2_nordland_utm)
+cell_size <- 5000  # 2km in meters
+
+fishnet_sf_utm <- create_fishnet(bbox_utm, cell_size)
+
+# Optionally, reproject the fishnet back to the original CRS
+fishnet_sf <- st_transform(fishnet_sf_utm, crs = st_crs(shp2_nordland))
+
+# Plot with ggplot2
+fishnet_nordland_map <- ggplot() +
+  geom_sf(data = shp2_nordland_utm, color = "gray30", size = 0.2, fill = NA) +
+  geom_sf(data = intersect3_nordland, aes(color = occurrences), size = 1.5) +
+  scale_color_viridis_c(option = "viridis", begin = 0, end = 1, direction = -1) +  # continuous color scale
+  
+  # Add the fishnet grid with black outlines
+  geom_sf(data = fishnet_sf, fill = NA, color = "black", size = 0.2) +
+  
+  ggtitle("Nordland") +
+  theme_bw() +
+  theme(
+    axis.title.x = element_blank(),  # Remove x-axis title
+    axis.title.y = element_blank(),  # Remove y-axis title
+    plot.title.position = "panel",  # Position the title centered above the plot
+    plot.title = element_text(hjust = 0.5)  # Center the title text
+  )
+
+print(fishnet_nordland_map)
 
 ####################### ROGALAND #######################################
 # Filter shp2 to include only the geometry for the county of interest
@@ -288,13 +592,63 @@ rogaland_map <- ggplot() +
   theme_bw() +
   theme(axis.title.x = element_blank(),  # Remove x-axis title
         axis.title.y = element_blank(),  # Remove y-axis title
-        plot.title.position = "plot",  # Position the title centered above the plot
+        plot.title.position = "panel",  # Position the title centered above the plot
         plot.title = element_text(hjust = 0.5))  # Center the title text
 
 print(rogaland_map)
 
 sum(intersect3_rogaland$occurrences)
 unique(intersect3_rogaland$originalScientificName)
+
+# CREATE GRID
+# Reproject shp2_rogaland to UTM zone 32N
+shp2_rogaland_utm <- st_transform(shp2_rogaland, crs = 25833)
+
+# Create fishnet function
+create_fishnet <- function(bbox, cell_size) {
+  x_coords <- seq(bbox["xmin"], bbox["xmax"], by = cell_size)
+  y_coords <- seq(bbox["ymin"], bbox["ymax"], by = cell_size)
+  
+  # Ensure the grid covers the entire extent
+  if (tail(x_coords, 1) < bbox["xmax"]) x_coords <- c(x_coords, bbox["xmax"])
+  if (tail(y_coords, 1) < bbox["ymax"]) y_coords <- c(y_coords, bbox["ymax"])
+  
+  grid <- expand.grid(x = x_coords, y = y_coords)
+  grid_sf <- st_as_sf(grid, coords = c("x", "y"), crs = st_crs(shp2_rogaland_utm))
+  
+  fishnet <- st_make_grid(grid_sf, cellsize = c(cell_size, cell_size), square = TRUE)
+  fishnet_sf <- st_sf(geometry = fishnet)
+  return(fishnet_sf)
+}
+
+# Create a fishnet grid of 2km by 2km over the extent of shp2_rogaland in UTM
+bbox_utm <- st_bbox(shp2_rogaland_utm)
+cell_size <- 5000  # 2km in meters
+
+fishnet_sf_utm <- create_fishnet(bbox_utm, cell_size)
+
+# Optionally, reproject the fishnet back to the original CRS
+fishnet_sf <- st_transform(fishnet_sf_utm, crs = st_crs(shp2_rogaland))
+
+# Plot with ggplot2
+fishnet_rogaland_map <- ggplot() +
+  geom_sf(data = shp2_rogaland_utm, color = "gray30", size = 0.2, fill = NA) +
+  geom_sf(data = intersect3_rogaland, aes(color = occurrences), size = 1.5) +
+  scale_color_viridis_c(option = "viridis", begin = 0, end = 1, direction = -1) +  # continuous color scale
+  
+  # Add the fishnet grid with black outlines
+  geom_sf(data = fishnet_sf, fill = NA, color = "black", size = 0.2) +
+  
+  ggtitle("Rogaland") +
+  theme_bw() +
+  theme(
+    axis.title.x = element_blank(),  # Remove x-axis title
+    axis.title.y = element_blank(),  # Remove y-axis title
+    plot.title.position = "panel",  # Position the title centered above the plot
+    plot.title = element_text(hjust = 0.5)  # Center the title text
+  )
+
+print(fishnet_rogaland_map)
 
 ####################### TRØNDELAG #######################################
 # Filter shp2 to include only the geometry for the county of interest
@@ -311,13 +665,63 @@ troendelag_map <- ggplot() +
   theme_bw() +
   theme(axis.title.x = element_blank(),  # Remove x-axis title
         axis.title.y = element_blank(),  # Remove y-axis title
-        plot.title.position = "plot",  # Position the title centered above the plot
+        plot.title.position = "panel",  # Position the title centered above the plot
         plot.title = element_text(hjust = 0.5))  # Center the title text
 
 print(troendelag_map)
 
 sum(intersect3_troendelag$occurrences)
 unique(intersect3_troendelag$originalScientificName)
+
+# CREATE GRID
+# Reproject shp2_troendelag to UTM zone 32N
+shp2_troendelag_utm <- st_transform(shp2_troendelag, crs = 25833)
+
+# Create fishnet function
+create_fishnet <- function(bbox, cell_size) {
+  x_coords <- seq(bbox["xmin"], bbox["xmax"], by = cell_size)
+  y_coords <- seq(bbox["ymin"], bbox["ymax"], by = cell_size)
+  
+  # Ensure the grid covers the entire extent
+  if (tail(x_coords, 1) < bbox["xmax"]) x_coords <- c(x_coords, bbox["xmax"])
+  if (tail(y_coords, 1) < bbox["ymax"]) y_coords <- c(y_coords, bbox["ymax"])
+  
+  grid <- expand.grid(x = x_coords, y = y_coords)
+  grid_sf <- st_as_sf(grid, coords = c("x", "y"), crs = st_crs(shp2_troendelag_utm))
+  
+  fishnet <- st_make_grid(grid_sf, cellsize = c(cell_size, cell_size), square = TRUE)
+  fishnet_sf <- st_sf(geometry = fishnet)
+  return(fishnet_sf)
+}
+
+# Create a fishnet grid of 2km by 2km over the extent of shp2_troendelag in UTM
+bbox_utm <- st_bbox(shp2_troendelag_utm)
+cell_size <- 5000  # 2km in meters
+
+fishnet_sf_utm <- create_fishnet(bbox_utm, cell_size)
+
+# Optionally, reproject the fishnet back to the original CRS
+fishnet_sf <- st_transform(fishnet_sf_utm, crs = st_crs(shp2_troendelag))
+
+# Plot with ggplot2
+fishnet_troendelag_map <- ggplot() +
+  geom_sf(data = shp2_troendelag_utm, color = "gray30", size = 0.2, fill = NA) +
+  geom_sf(data = intersect3_troendelag, aes(color = occurrences), size = 1.5) +
+  scale_color_viridis_c(option = "viridis", begin = 0, end = 1, direction = -1) +  # continuous color scale
+  
+  # Add the fishnet grid with black outlines
+  geom_sf(data = fishnet_sf, fill = NA, color = "black", size = 0.2) +
+  
+  ggtitle("Tr\u00F8ndelag") +
+  theme_bw() +
+  theme(
+    axis.title.x = element_blank(),  # Remove x-axis title
+    axis.title.y = element_blank(),  # Remove y-axis title
+    plot.title.position = "panel",  # Position the title centered above the plot
+    plot.title = element_text(hjust = 0.5)  # Center the title text
+  )
+
+print(fishnet_troendelag_map)
 
 ####################### FINNMARK #######################################
 # Filter shp2 to include only the geometry for the county of interest
@@ -334,13 +738,63 @@ finnmark_map <- ggplot() +
   theme_bw() +
   theme(axis.title.x = element_blank(),  # Remove x-axis title
         axis.title.y = element_blank(),  # Remove y-axis title
-        plot.title.position = "plot",  # Position the title centered above the plot
+        plot.title.position = "panel",  # Position the title centered above the plot
         plot.title = element_text(hjust = 0.5))  # Center the title text
 
 print(finnmark_map)
 
 sum(intersect3_finnmark$occurrences)
 unique(intersect3_finnmark$originalScientificName)
+
+# CREATE GRID
+# Reproject shp2_finnmark to UTM zone 32N
+shp2_finnmark_utm <- st_transform(shp2_finnmark, crs = 25833)
+
+# Create fishnet function
+create_fishnet <- function(bbox, cell_size) {
+  x_coords <- seq(bbox["xmin"], bbox["xmax"], by = cell_size)
+  y_coords <- seq(bbox["ymin"], bbox["ymax"], by = cell_size)
+  
+  # Ensure the grid covers the entire extent
+  if (tail(x_coords, 1) < bbox["xmax"]) x_coords <- c(x_coords, bbox["xmax"])
+  if (tail(y_coords, 1) < bbox["ymax"]) y_coords <- c(y_coords, bbox["ymax"])
+  
+  grid <- expand.grid(x = x_coords, y = y_coords)
+  grid_sf <- st_as_sf(grid, coords = c("x", "y"), crs = st_crs(shp2_finnmark_utm))
+  
+  fishnet <- st_make_grid(grid_sf, cellsize = c(cell_size, cell_size), square = TRUE)
+  fishnet_sf <- st_sf(geometry = fishnet)
+  return(fishnet_sf)
+}
+
+# Create a fishnet grid of 2km by 2km over the extent of shp2_finnmark in UTM
+bbox_utm <- st_bbox(shp2_finnmark_utm)
+cell_size <- 5000  # 2km in meters
+
+fishnet_sf_utm <- create_fishnet(bbox_utm, cell_size)
+
+# Optionally, reproject the fishnet back to the original CRS
+fishnet_sf <- st_transform(fishnet_sf_utm, crs = st_crs(shp2_finnmark))
+
+# Plot with ggplot2
+fishnet_finnmark_map <- ggplot() +
+  geom_sf(data = shp2_finnmark_utm, color = "gray30", size = 0.2, fill = NA) +
+  geom_sf(data = intersect3_finnmark, aes(color = occurrences), size = 1.5) +
+  scale_color_viridis_c(option = "viridis", begin = 0, end = 1, direction = -1) +  # continuous color scale
+  
+  # Add the fishnet grid with black outlines
+  geom_sf(data = fishnet_sf, fill = NA, color = "black", size = 0.2) +
+  
+  ggtitle("Finnmark") +
+  theme_bw() +
+  theme(
+    axis.title.x = element_blank(),  # Remove x-axis title
+    axis.title.y = element_blank(),  # Remove y-axis title
+    plot.title.position = "panel",  # Position the title centered above the plot
+    plot.title = element_text(hjust = 0.5)  # Center the title text
+  )
+
+print(fishnet_finnmark_map)
 
 ####################### AGDER #######################################
 # Filter shp2 to include only the geometry for the county of interest
@@ -357,13 +811,63 @@ agder_map <- ggplot() +
   theme_bw() +
   theme(axis.title.x = element_blank(),  # Remove x-axis title
         axis.title.y = element_blank(),  # Remove y-axis title
-        plot.title.position = "plot",  # Position the title centered above the plot
+        plot.title.position = "panel",  # Position the title centered above the plot
         plot.title = element_text(hjust = 0.5))  # Center the title text
 
 print(agder_map)
 
 sum(intersect3_agder$occurrences)
 unique(intersect3_agder$originalScientificName)
+
+# CREATE GRID
+# Reproject shp2_agder to UTM zone 32N
+shp2_agder_utm <- st_transform(shp2_agder, crs = 25833)
+
+# Create fishnet function
+create_fishnet <- function(bbox, cell_size) {
+  x_coords <- seq(bbox["xmin"], bbox["xmax"], by = cell_size)
+  y_coords <- seq(bbox["ymin"], bbox["ymax"], by = cell_size)
+  
+  # Ensure the grid covers the entire extent
+  if (tail(x_coords, 1) < bbox["xmax"]) x_coords <- c(x_coords, bbox["xmax"])
+  if (tail(y_coords, 1) < bbox["ymax"]) y_coords <- c(y_coords, bbox["ymax"])
+  
+  grid <- expand.grid(x = x_coords, y = y_coords)
+  grid_sf <- st_as_sf(grid, coords = c("x", "y"), crs = st_crs(shp2_agder_utm))
+  
+  fishnet <- st_make_grid(grid_sf, cellsize = c(cell_size, cell_size), square = TRUE)
+  fishnet_sf <- st_sf(geometry = fishnet)
+  return(fishnet_sf)
+}
+
+# Create a fishnet grid of 2km by 2km over the extent of shp2_agder in UTM
+bbox_utm <- st_bbox(shp2_agder_utm)
+cell_size <- 2000  # 2km in meters
+
+fishnet_sf_utm <- create_fishnet(bbox_utm, cell_size)
+
+# Optionally, reproject the fishnet back to the original CRS
+fishnet_sf <- st_transform(fishnet_sf_utm, crs = st_crs(shp2_agder))
+
+# Plot with ggplot2
+fishnet_agder_map <- ggplot() +
+  geom_sf(data = shp2_agder_utm, color = "gray30", size = 0.2, fill = NA) +
+  geom_sf(data = intersect3_agder, aes(color = occurrences), size = 1.5) +
+  scale_color_viridis_c(option = "viridis", begin = 0, end = 1, direction = -1) +  # continuous color scale
+  
+  # Add the fishnet grid with black outlines
+  geom_sf(data = fishnet_sf, fill = NA, color = "black", size = 0.2) +
+  
+  ggtitle("Agder") +
+  theme_bw() +
+  theme(
+    axis.title.x = element_blank(),  # Remove x-axis title
+    axis.title.y = element_blank(),  # Remove y-axis title
+    plot.title.position = "panel",  # Position the title centered above the plot
+    plot.title = element_text(hjust = 0.5)  # Center the title text
+  )
+
+print(fishnet_agder_map)
 
 ####################### TELEMARK #######################################
 # Filter shp2 to include only the geometry for the county of interest
@@ -380,13 +884,63 @@ telemark_map <- ggplot() +
   theme_bw() +
   theme(axis.title.x = element_blank(),  # Remove x-axis title
         axis.title.y = element_blank(),  # Remove y-axis title
-        plot.title.position = "plot",  # Position the title centered above the plot
+        plot.title.position = "panel",  # Position the title centered above the plot
         plot.title = element_text(hjust = 0.5))  # Center the title text
 
 print(telemark_map)
 
 sum(intersect3_telemark$occurrences)
 unique(intersect3_telemark$originalScientificName)
+
+# CREATE GRID
+# Reproject shp2_telemark to UTM zone 32N
+shp2_telemark_utm <- st_transform(shp2_telemark, crs = 25833)
+
+# Create fishnet function
+create_fishnet <- function(bbox, cell_size) {
+  x_coords <- seq(bbox["xmin"], bbox["xmax"], by = cell_size)
+  y_coords <- seq(bbox["ymin"], bbox["ymax"], by = cell_size)
+  
+  # Ensure the grid covers the entire extent
+  if (tail(x_coords, 1) < bbox["xmax"]) x_coords <- c(x_coords, bbox["xmax"])
+  if (tail(y_coords, 1) < bbox["ymax"]) y_coords <- c(y_coords, bbox["ymax"])
+  
+  grid <- expand.grid(x = x_coords, y = y_coords)
+  grid_sf <- st_as_sf(grid, coords = c("x", "y"), crs = st_crs(shp2_telemark_utm))
+  
+  fishnet <- st_make_grid(grid_sf, cellsize = c(cell_size, cell_size), square = TRUE)
+  fishnet_sf <- st_sf(geometry = fishnet)
+  return(fishnet_sf)
+}
+
+# Create a fishnet grid of 2km by 2km over the extent of shp2_telemark in UTM
+bbox_utm <- st_bbox(shp2_telemark_utm)
+cell_size <- 2000  # 2km in meters
+
+fishnet_sf_utm <- create_fishnet(bbox_utm, cell_size)
+
+# Optionally, reproject the fishnet back to the original CRS
+fishnet_sf <- st_transform(fishnet_sf_utm, crs = st_crs(shp2_telemark))
+
+# Plot with ggplot2
+fishnet_telemark_map <- ggplot() +
+  geom_sf(data = shp2_telemark_utm, color = "gray30", size = 0.2, fill = NA) +
+  geom_sf(data = intersect3_telemark, aes(color = occurrences), size = 1.5) +
+  scale_color_viridis_c(option = "viridis", begin = 0, end = 1, direction = -1) +  # continuous color scale
+  
+  # Add the fishnet grid with black outlines
+  geom_sf(data = fishnet_sf, fill = NA, color = "black", size = 0.2) +
+  
+  ggtitle("Telemark") +
+  theme_bw() +
+  theme(
+    axis.title.x = element_blank(),  # Remove x-axis title
+    axis.title.y = element_blank(),  # Remove y-axis title
+    plot.title.position = "panel",  # Position the title centered above the plot
+    plot.title = element_text(hjust = 0.5)  # Center the title text
+  )
+
+print(fishnet_telemark_map)
 
 ####################### VESTFOLD #######################################
 # Filter shp2 to include only the geometry for the county of interest
@@ -403,13 +957,63 @@ vestfold_map <- ggplot() +
   theme_bw() +
   theme(axis.title.x = element_blank(),  # Remove x-axis title
         axis.title.y = element_blank(),  # Remove y-axis title
-        plot.title.position = "plot",  # Position the title centered above the plot
+        plot.title.position = "panel",  # Position the title centered above the plot
         plot.title = element_text(hjust = 0.5))  # Center the title text
 
 print(vestfold_map)
 
 sum(intersect3_vestfold$occurrences)
 unique(intersect3_vestfold$originalScientificName)
+
+# CREATE GRID
+# Reproject shp2_vestfold to UTM zone 32N
+shp2_vestfold_utm <- st_transform(shp2_vestfold, crs = 25833)
+
+# Create fishnet function
+create_fishnet <- function(bbox, cell_size) {
+  x_coords <- seq(bbox["xmin"], bbox["xmax"], by = cell_size)
+  y_coords <- seq(bbox["ymin"], bbox["ymax"], by = cell_size)
+  
+  # Ensure the grid covers the entire extent
+  if (tail(x_coords, 1) < bbox["xmax"]) x_coords <- c(x_coords, bbox["xmax"])
+  if (tail(y_coords, 1) < bbox["ymax"]) y_coords <- c(y_coords, bbox["ymax"])
+  
+  grid <- expand.grid(x = x_coords, y = y_coords)
+  grid_sf <- st_as_sf(grid, coords = c("x", "y"), crs = st_crs(shp2_vestfold_utm))
+  
+  fishnet <- st_make_grid(grid_sf, cellsize = c(cell_size, cell_size), square = TRUE)
+  fishnet_sf <- st_sf(geometry = fishnet)
+  return(fishnet_sf)
+}
+
+# Create a fishnet grid of 2km by 2km over the extent of shp2_vestfold in UTM
+bbox_utm <- st_bbox(shp2_vestfold_utm)
+cell_size <- 2000  # 2km in meters
+
+fishnet_sf_utm <- create_fishnet(bbox_utm, cell_size)
+
+# Optionally, reproject the fishnet back to the original CRS
+fishnet_sf <- st_transform(fishnet_sf_utm, crs = st_crs(shp2_vestfold))
+
+# Plot with ggplot2
+fishnet_vestfold_map <- ggplot() +
+  geom_sf(data = shp2_vestfold_utm, color = "gray30", size = 0.2, fill = NA) +
+  geom_sf(data = intersect3_vestfold, aes(color = occurrences), size = 1.5) +
+  scale_color_viridis_c(option = "viridis", begin = 0, end = 1, direction = -1) +  # continuous color scale
+  
+  # Add the fishnet grid with black outlines
+  geom_sf(data = fishnet_sf, fill = NA, color = "black", size = 0.2) +
+  
+  ggtitle("Vestfold") +
+  theme_bw() +
+  theme(
+    axis.title.x = element_blank(),  # Remove x-axis title
+    axis.title.y = element_blank(),  # Remove y-axis title
+    plot.title.position = "panel",  # Position the title centered above the plot
+    plot.title = element_text(hjust = 0.5)  # Center the title text
+  )
+
+print(fishnet_vestfold_map)
 
 ####################### BUSKERUD #######################################
 # Filter shp2 to include only the geometry for the county of interest
@@ -427,13 +1031,63 @@ buskerud_map <- ggplot() +
   theme_bw() +
   theme(axis.title.x = element_blank(),  # Remove x-axis title
         axis.title.y = element_blank(),  # Remove y-axis title
-        plot.title.position = "plot",  # Position the title centered above the plot
+        plot.title.position = "panel",  # Position the title centered above the plot
         plot.title = element_text(hjust = 0.5))  # Center the title text
 
 print(buskerud_map)
 
 sum(intersect3_buskerud$occurrences)
 unique(intersect3_buskerud$originalScientificName)
+
+# CREATE GRID
+# Reproject shp2_buskerud to UTM zone 32N
+shp2_buskerud_utm <- st_transform(shp2_buskerud, crs = 25833)
+
+# Create fishnet function
+create_fishnet <- function(bbox, cell_size) {
+  x_coords <- seq(bbox["xmin"], bbox["xmax"], by = cell_size)
+  y_coords <- seq(bbox["ymin"], bbox["ymax"], by = cell_size)
+  
+  # Ensure the grid covers the entire extent
+  if (tail(x_coords, 1) < bbox["xmax"]) x_coords <- c(x_coords, bbox["xmax"])
+  if (tail(y_coords, 1) < bbox["ymax"]) y_coords <- c(y_coords, bbox["ymax"])
+  
+  grid <- expand.grid(x = x_coords, y = y_coords)
+  grid_sf <- st_as_sf(grid, coords = c("x", "y"), crs = st_crs(shp2_buskerud_utm))
+  
+  fishnet <- st_make_grid(grid_sf, cellsize = c(cell_size, cell_size), square = TRUE)
+  fishnet_sf <- st_sf(geometry = fishnet)
+  return(fishnet_sf)
+}
+
+# Create a fishnet grid of 2km by 2km over the extent of shp2_buskerud in UTM
+bbox_utm <- st_bbox(shp2_buskerud_utm)
+cell_size <- 2000  # 2km in meters
+
+fishnet_sf_utm <- create_fishnet(bbox_utm, cell_size)
+
+# Optionally, reproject the fishnet back to the original CRS
+fishnet_sf <- st_transform(fishnet_sf_utm, crs = st_crs(shp2_buskerud))
+
+# Plot with ggplot2
+fishnet_buskerud_map <- ggplot() +
+  geom_sf(data = shp2_buskerud_utm, color = "gray30", size = 0.2, fill = NA) +
+  geom_sf(data = intersect3_buskerud, aes(color = occurrences), size = 1.5) +
+  scale_color_viridis_c(option = "viridis", begin = 0, end = 1, direction = -1) +  # continuous color scale
+  
+  # Add the fishnet grid with black outlines
+  geom_sf(data = fishnet_sf, fill = NA, color = "black", size = 0.2) +
+  
+  ggtitle("Buskerud") +
+  theme_bw() +
+  theme(
+    axis.title.x = element_blank(),  # Remove x-axis title
+    axis.title.y = element_blank(),  # Remove y-axis title
+    plot.title.position = "panel",  # Position the title centered above the plot
+    plot.title = element_text(hjust = 0.5)  # Center the title text
+  )
+
+print(fishnet_buskerud_map)
 
 ####################### OSLO #######################################
 # Filter shp2 to include only the geometry for the county of interest
@@ -473,6 +1127,56 @@ print(oslo_map)
 
 sum(intersect3_oslo$occurrences)
 unique(intersect3_oslo$originalScientificName)
+
+# CREATE GRID
+# Reproject shp2_oslo to UTM zone 32N
+shp2_oslo_utm <- st_transform(shp2_oslo, crs = 25833)
+
+# Create fishnet function
+create_fishnet <- function(bbox, cell_size) {
+  x_coords <- seq(bbox["xmin"], bbox["xmax"], by = cell_size)
+  y_coords <- seq(bbox["ymin"], bbox["ymax"], by = cell_size)
+  
+  # Ensure the grid covers the entire extent
+  if (tail(x_coords, 1) < bbox["xmax"]) x_coords <- c(x_coords, bbox["xmax"])
+  if (tail(y_coords, 1) < bbox["ymax"]) y_coords <- c(y_coords, bbox["ymax"])
+  
+  grid <- expand.grid(x = x_coords, y = y_coords)
+  grid_sf <- st_as_sf(grid, coords = c("x", "y"), crs = st_crs(shp2_oslo_utm))
+  
+  fishnet <- st_make_grid(grid_sf, cellsize = c(cell_size, cell_size), square = TRUE)
+  fishnet_sf <- st_sf(geometry = fishnet)
+  return(fishnet_sf)
+}
+
+# Create a fishnet grid of 2km by 2km over the extent of shp2_oslo in UTM
+bbox_utm <- st_bbox(shp2_oslo_utm)
+cell_size <- 2000  # 2km in meters
+
+fishnet_sf_utm <- create_fishnet(bbox_utm, cell_size)
+
+# Optionally, reproject the fishnet back to the original CRS
+fishnet_sf <- st_transform(fishnet_sf_utm, crs = st_crs(shp2_oslo))
+
+# Plot with ggplot2
+fishnet_oslo_map <- ggplot() +
+  geom_sf(data = shp2_oslo_utm, color = "gray30", size = 0.2, fill = NA) +
+  geom_sf(data = intersect3_oslo, aes(color = occurrences), size = 1.5) +
+  scale_color_viridis_c(option = "viridis", begin = 0, end = 1, direction = -1) +  # continuous color scale
+  
+  # Add the fishnet grid with black outlines
+  geom_sf(data = fishnet_sf, fill = NA, color = "black", size = 0.2) +
+  
+  ggtitle("Oslo") +
+  theme_bw() +
+  theme(
+    axis.title.x = element_blank(),  # Remove x-axis title
+    axis.title.y = element_blank(),  # Remove y-axis title
+    plot.title.position = "panel",  # Position the title centered above the plot
+    plot.title = element_text(hjust = 0.5)  # Center the title text
+  )
+
+print(fishnet_oslo_map)
 
 ################################### STATISTICS #######################################################
 library(ggplot2)
@@ -614,7 +1318,7 @@ print(rows_with_na) # 0
 
 #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% SUMMARIZE OCCURRENCES
 
-sum(intersect3$occurrences) #136,945
+sum(intersect3$occurrences) #136,942
 
 length(unique(intersect3$originalScientificName)) # 3737
 
@@ -637,7 +1341,7 @@ occurrence_ratios <- c(
   )
 print(occurrence_ratios)
 # Format the ratios as percentages
-occ_percentage <- percent(occurrence_ratios, 2)
+occ_percentage <- percent(occurrence_ratios, accuracy = 0.01)
 print(occ_percentage)
 
 sum(unique(intersect3$area_fylk)) # 153,463.3 sq. km
@@ -660,7 +1364,7 @@ size_ratios <- c(
 )                 
 print(size_ratios) # in sq km
 # Format the ratios as percentages
-size_percentage <- percent(size_ratios, 2)
+size_percentage <- percent(size_ratios, accuracy = 0.01)
 print(size_percentage)
 
 by_county_occ_sum <- intersect3 %>%
@@ -690,7 +1394,6 @@ kable(summary_table, "latex", file = "summary_table.tex")
 #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% STATS FROM GIS LAYERS
 library(ggplot2)
 library(sf)
-library(viridis)
 
 # Read the shp made in ArcGIS Pro to an sf object - kelp reference areas (https://open-data-fiskeridirektoratet-fiskeridir.hub.arcgis.com/datasets/50c3d14959444e77ac6ed6d96308a2bd_0/explore?location=60.485391%2C9.006054%2C6.49)
 tare_shp <- st_read("C:/Users/gngia/OneDrive/Documents/new obis/tare_referense_omr_new.shp", stringsAsFactors=FALSE)
@@ -1101,87 +1804,27 @@ lob_con_percent <- c(0.07721415,  3.08883530,  0.00864787, 28.67519468 , 0.49820
 lob_con_percent <- paste0(round(lob_con_percent, 2), "%")
 print(lob_con_percent)
 
-# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% WEIRD PLOTTING STUFF
-library(sf)
-
-class(intersect3_oslo)
-class(intersect3_oslo$geometry)
-
-recast <- st_as_sf(intersect3_oslo)
-class(recast)
-print(recast)
-class(recast$geometry)
-
-geom_recast <- recast %>%
-  st_as_sf(wkt = "geometry") %>%
-  st_coordinates(geometry) %>%
-  as.data.frame() %>%
-  rename(longitude = X, latitude = Y) %>%
-  st_as_sf(coords = c("longitude", "latitude"), crs = "EPSG:4326")
-
-
-
-library(sf)
-library(dplyr)
-
-# Step 1: Convert WKT strings to sf objects
-recast <- intersect3_oslo %>%
-  as.data.frame() %>%
-  st_as_sf( wkt = "geometry") %>%
-  st_transform(crs = 4326) %>%
-  st_cast(recast,"POINT") %>%
-  rename(longitude = X, latitude = Y) %>%
-  st_as_sf(coords = c("longitude", "latitude"), crs = 4326)
-
-
-# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% GRID
-sum(intersect3$occurrences)
-library(tidyverse)
-library(sf)
-library(raster)
-library(ggplot2)
-library(stringr)
-
-
-bbox <- st_bbox(shp2_oslo)
-
-# Create a grid with cells of 10m x 10m
-grid_10m <- st_make_grid(shp2_oslo, cellsize = c(10, 10), what = "polygons")
-
-# Convert the grid polygons to the same CRS as your occurrence data
-grid_10m <- st_transform(grid_10m, st_crs(intersect3_oslo))
-
-grid_10m <- st_as_sf(grid_1m)
-
-# Perform spatial join to count occurrences per grid cell
-grid_with_counts <- st_join(grid_10m, intersect3_oslo, left = FALSE)
-
-# Aggregate counts by grid cell
-grid_counts <- as.data.frame(table(grid_with_counts$geometry))
-
-# Rename columns for clarity
-colnames(grid_counts) <- c("grid_cell", "occurrence_count")
-
-
-oslo_map_with_grid <- ggplot() +
-  geom_sf(data = shp2_oslo, color = "gray30", size = 0.2, fill = NA) +
-  geom_sf(data = intersect3_oslo, aes(color = occurrences), size = 1.5, fill = NA) +
-  scale_fill_gradient(low = "blue", high = "red") +
-  scale_color_gradient(low = "blue", high = "red") +  # Adding color scale for points
-  ggtitle("Oslo") +
-  theme_bw() +
-  theme(axis.title.x = element_blank(),  # Remove x-axis title
-        axis.title.y = element_blank(),  # Remove y-axis title
-        plot.title.position = "plot",  # Position the title centered above the plot
-        plot.title = element_text(hjust = 0.5),  # Center the title text
-        panel.grid.major = element_line(color = "black", linewidth = 0.1),
-        panel.background = element_rect(fill = NA),
-        panel.ontop = TRUE
-  )
-
-print(oslo_map_with_grid)
+# Tasks for 21.05.2024:
+# Grid
+# Year
+# Depth
+# basis of observation
+# enter all in results
+# put in redone maps 
+# begin on discussion
 
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% DEPTH
+
+depth_data <- intersect3$depth
+# Create the boxplot
+ggplot(data = intersect3, aes(y = depth)) +
+  geom_boxplot(fill = "skyblue", color = "black") +
+  labs(title = "Boxplot of Depth Distribution",
+       y = "Depth (m)") +
+  theme_minimal()
+
+
+
 
 map_occ_joined_clip3 <- map_occ_joined_clip1 %>%
   group_by(FYLKESNAVN, originalScientificName, depth) %>%
@@ -1206,7 +1849,7 @@ print(depth)
 
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% YEAR
 
-
+# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Basis of observation
 
 ######################### Checks & Notes ##################################
 
