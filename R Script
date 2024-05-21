@@ -1804,27 +1804,7 @@ lob_con_percent <- c(0.07721415,  3.08883530,  0.00864787, 28.67519468 , 0.49820
 lob_con_percent <- paste0(round(lob_con_percent, 2), "%")
 print(lob_con_percent)
 
-# Tasks for 21.05.2024:
-# Grid
-# Year
-# Depth
-# basis of observation
-# enter all in results
-# put in redone maps 
-# begin on discussion
-
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% DEPTH
-
-depth_data <- intersect3$depth
-# Create the boxplot
-ggplot(data = intersect3, aes(y = depth)) +
-  geom_boxplot(fill = "skyblue", color = "black") +
-  labs(title = "Boxplot of Depth Distribution",
-       y = "Depth (m)") +
-  theme_minimal()
-
-
-
 
 map_occ_joined_clip3 <- map_occ_joined_clip1 %>%
   group_by(FYLKESNAVN, originalScientificName, depth) %>%
@@ -1832,6 +1812,15 @@ map_occ_joined_clip3 <- map_occ_joined_clip1 %>%
 View(map_occ_joined_clip3)
 
 intersect4 <- st_intersection(map_occ_joined_clip3, shp2)
+
+depth_data <- intersect4$depth
+
+# Create the boxplot
+ggplot(data = intersect4, aes(y = depth)) +
+  geom_boxplot(fill = "skyblue", color = "black") +
+  labs(title = "Boxplot of Depth Distribution",
+       y = "Depth (m)") +
+  theme_minimal()
 
 # Plot the depth data for the occurrences
 depth <- ggplot() +
@@ -1849,9 +1838,47 @@ print(depth)
 
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% YEAR
 
+# maybe a scatter plot is better?
+
+# Create a strip chart (dot plot)
+ggplot(intersect3, aes(x = factor(year), y = 1)) +  # y = 1 to align points horizontally
+  geom_jitter(height = 0.1, width = 0.1, size = 2, color = "blue") +
+  labs(title = "Distribution of Sample Collection Years",
+       x = "Year",
+       y = "") +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5),
+        axis.text.y = element_blank(),  # Remove y-axis labels
+        axis.ticks.y = element_blank(),  # Remove y-axis ticks
+        axis.text.x = element_text(angle = 45, hjust = 1))
+
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Basis of observation
 
+ggplot(intersect3, aes(x = basis_of_observation)) +
+  geom_bar(aes(fill = basis_of_observation), color = "black") +
+  scale_fill_viridis_d() +
+  labs(title = "Distribution of Basis of Observation by Year",
+       x = "Basis of Observation",
+       y = "Count of Samples",
+       fill = "Observation Method") +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5),
+        axis.text.x = element_text(angle = 45, hjust = 1)) +
+  facet_wrap(~ year)
+
+
 ######################### Checks & Notes ##################################
+
+# Tasks for 22.05.2024:
+# Grid - change to 5 sq km or 2 sq km 
+# Year - run
+# Depth - run
+# basis of observation - run
+# enter all in results
+# put in redone maps 
+# begin on discussion
+
+
 
 
 #ADD HOW THE CORAL MPAS ARENT ALL GEOGRAPHICALLY DEFINE AS ACTUAL MPAS
