@@ -1807,27 +1807,43 @@ print(lob_con_percent)
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% DEPTH
 
 map_occ_joined_clip3 <- map_occ_joined_clip1 %>%
-  group_by(FYLKESNAVN, originalScientificName, depth) %>%
+  group_by(FYLKESNAVN, originalScientificName, depth, phylum, class, ) %>%
   summarize(occurrences = n())
 View(map_occ_joined_clip3)
 
 intersect4 <- st_intersection(map_occ_joined_clip3, shp2)
+View(intersect4)
 
-depth_data <- intersect4$depth
+boxplot(intersect4$depth)
 
-# Create the boxplot
-ggplot(data = intersect4, aes(y = depth)) +
-  geom_boxplot(fill = "skyblue", color = "black") +
-  labs(title = "Boxplot of Depth Distribution",
-       y = "Depth (m)") +
-  theme_minimal()
+# Combine species and depth data into a single data frame
+combined_data <- data.frame(Phylum = intersect4$phylum, Depth = intersect4$depth)
 
-# Plot the depth data for the occurrences
+# Remove rows with NA values
+#combined_data <- na.omit(combined_data)
+
+# Check if there is any valid data to plot
+if (nrow(combined_data) > 0) {
+  # Create the scatter plot
+  ggplot(data = combined_data, aes(x = Phylum, y = Depth)) +
+    geom_point() +
+    labs(title = "Scatter Plot of Depth Data by Phylum",
+         x = "Phylum",
+         y = "Depth (m)") +
+    theme_minimal() +
+    theme(axis.text.x = element_text(angle = 90, hjust = 1)) +  # Rotate x-axis labels for better readability
+    scale_x_discrete(position = "top") +  # Move x-axis to the top
+    scale_y_reverse()  # Reverse the y-axis direction
+} else {
+  print("No valid data to plot.")
+}
+
+# Create the plot
 depth <- ggplot() +
   geom_sf(data = shp2) +
-  geom_sf(data = intersect4, aes(color = depth)) +
-  scale_fill_gradient(low = "orange", high = "blue") +
-  scale_color_gradient(low = "orange", high = "blue") +  # Adding color scale for points
+  geom_sf(data = depth_data, aes(fill = depth, color = depth)) +
+  scale_fill_gradient(low = "red", high = "blue") +
+  scale_color_gradient(low = "red", high = "blue") +  # Adding color scale for points
   theme_bw() +
   theme(axis.title.x = element_blank(),  # Remove x-axis title
         axis.title.y = element_blank(),  # Remove y-axis title
@@ -1836,40 +1852,144 @@ depth <- ggplot() +
 
 print(depth)
 
+
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% YEAR
 
-# maybe a scatter plot is better?
 
-# Create a strip chart (dot plot)
-ggplot(intersect3, aes(x = factor(year), y = 1)) +  # y = 1 to align points horizontally
-  geom_jitter(height = 0.1, width = 0.1, size = 2, color = "blue") +
-  labs(title = "Distribution of Sample Collection Years",
-       x = "Year",
-       y = "") +
-  theme_minimal() +
-  theme(plot.title = element_text(hjust = 0.5),
-        axis.text.y = element_blank(),  # Remove y-axis labels
-        axis.ticks.y = element_blank(),  # Remove y-axis ticks
-        axis.text.x = element_text(angle = 45, hjust = 1))
+library(ggplot2)
+library(dplyr)
+library(ggplot2)
+library(dplyr)
+
+# Create a data frame with the year and basis of record data
+year_bor_data <- data.frame(Basis_of_Record = intersect3$basisOfRecord, Year = intersect3$year)
+
+create_intervals <- function(year) {
+  if (is.na(year)) {
+    return(NA)
+  } else if (year >= 2021 & year <= 2024) {
+    return("2021-2024")
+  } else if (year >= 2011 & year <= 2020) {
+    return("2011-2020")
+  } else if (year >= 2000 & year <= 2010) {
+    return("2000-2010")
+  } else if (year >= 1990 & year <= 1999) {
+    return("1990-1999")
+  } else if (year >= 1980 & year <= 1989) {
+    return("1980-1989")
+  } else if (year >= 1970 & year <= 1979) {
+    return("1970-1979")
+  } else {
+    return("Before 1970")
+  }
+}
+# Remove rows with NA values
+year_bor_data <- na.omit(year_bor_data)
+
+# Apply the function to create a new column for intervals
+intersect3$Interval <- sapply(intersect3$year, create_intervals)
+
+# Remove rows with NA values
+year_data <- intersect3 %>%
+  filter(!is.na(year)) %>%
+  group_by(Interval) %>%
+  summarise(count = n())
+
+# Check if there is any valid data to plot
+if (nrow(year_data) > 0) {
+  # Create the scatter plot
+  ggplot(data = year_data, aes(x = Interval, y = count)) +
+    geom_bar(stat = "identity", fill = "skyblue", color = "black") +
+    labs(title = "Species Occurrences by Interval",
+         x = "Interval",
+         y = "Number of Occurrences") +
+    theme_minimal() +
+    theme(axis.text.x = element_text(angle = 90, hjust = 1)) +  # Rotate x-axis labels for better readability
+    scale_x_discrete(position = "bottom")  # Move x-axis to the top
+} else {
+  print("No valid data to plot.")
+}
 
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Basis of observation
 
-ggplot(intersect3, aes(x = basis_of_observation)) +
-  geom_bar(aes(fill = basis_of_observation), color = "black") +
-  scale_fill_viridis_d() +
-  labs(title = "Distribution of Basis of Observation by Year",
-       x = "Basis of Observation",
-       y = "Count of Samples",
-       fill = "Observation Method") +
-  theme_minimal() +
-  theme(plot.title = element_text(hjust = 0.5),
-        axis.text.x = element_text(angle = 45, hjust = 1)) +
-  facet_wrap(~ year)
+# Create a data frame with the year and basis of record data
+year_bor_data <- data.frame(Basis_of_Record = intersect3$basisOfRecord, Year = intersect3$year)
 
+# Remove rows with NA values
+year_bor_data <- na.omit(year_bor_data)
+
+bor <- (year_bor_data$Basis_of_Record)
+
+unique(year_bor_data$Basis_of_Record)
+sum(year_bor_data$Basis_of_Record == "HumanObservation")
+sum(year_bor_data$Basis_of_Record == "PreservedSpecimen")
+sum(year_bor_data$Basis_of_Record == "Occurrence")
+sum(year_bor_data$Basis_of_Record == "MaterialSample")
+
+
+bor_plot <- c(HumanObservation = 32174, PreservedSpecimen = 11413, Occurrence = 17813, MaterialSample = 1)
+
+print(bor_plot)
+pie(bor_plot)
+
+pie(bor_plot,
+    labels=as.character(bor_plot),
+    main="Basis of Records",
+    col=c("goldenrod1","firebrick2","midnightblue","forestgreen"),
+    border="black",
+    clockwise=TRUE
+)
+
+# Assuming 'year_bor_data' is already created and contains the 'Basis_of_Record' column
+# Remove rows with NA values
+year_bor_data <- na.omit(year_bor_data)
+
+# Count the occurrences of each Basis_of_Record
+bor_counts <- table(year_bor_data$Basis_of_Record)
+
+# Print the counts to verify
+print(bor_counts)
+
+# Create a named vector for the pie chart
+bor_plot <- c(
+  HumanObservation = sum(year_bor_data$Basis_of_Record == "HumanObservation"),
+  PreservedSpecimen = sum(year_bor_data$Basis_of_Record == "PreservedSpecimen"),
+  Occurrence = sum(year_bor_data$Basis_of_Record == "Occurrence"),
+  MaterialSample = sum(year_bor_data$Basis_of_Record == "MaterialSample")
+)
+# Define custom labels
+custom_labels <- c("Human Observation", "Preserved Specimen", "Occurrence", "Material Sample")
+
+bar_heights <- barplot(bor_plot,
+                       col = "goldenrod1",
+                       main = "Basis of Records",
+                       xlab = "Basis of Record",
+                       ylab = "Frequency",
+                       ylim = c(0, max(bor_plot) * 1.2),  # Adding some space on top for better readability
+                       names.arg = custom_labels)# Custom labels for the bars
+
+
+# Add the count numbers above each bar
+text(x = bar_heights, y = bor_plot, label = bor_plot, pos = 3, cex = 0.8, col = "black")
+
+
+
+# Set grbor_plot# Set graphical parameters to increase plot size
+par(mar = c(3, 3, 3, 3))  # Set margins
+par(cex = 1)  # Increase the size of text and symbols
+
+# Plot the pie chart
+pie(bor_plot,
+    labels = paste(names(bor_plot), "\n", bor_plot, sep = ""),
+    main = "Basis of Records",
+    col = c("goldenrod1", "firebrick2", "midnightblue", "forestgreen"),
+    border = "black",
+    clockwise = TRUE
+)
 
 ######################### Checks & Notes ##################################
 
-# Tasks for 22.05.2024:
+# Tasks for 23.05.2024:
 # Grid - change to 5 sq km or 2 sq km 
 # Year - run
 # Depth - run
@@ -1877,8 +1997,6 @@ ggplot(intersect3, aes(x = basis_of_observation)) +
 # enter all in results
 # put in redone maps 
 # begin on discussion
-
-
 
 
 #ADD HOW THE CORAL MPAS ARENT ALL GEOGRAPHICALLY DEFINE AS ACTUAL MPAS
