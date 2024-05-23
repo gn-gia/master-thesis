@@ -151,7 +151,7 @@ intersect3_troms <- intersect3 %>%
 # Plot with labels
 troms_map <-ggplot() +
   geom_sf(data = shp2_troms, color = "gray30", size = 0.2, fill = NA) +
-  geom_sf(data = intersect3_troms, aes(color = occurrences), size = 1, fill = NA) +
+  geom_sf(data = intersect3_troms, aes(color = occurrences), size = 1.5, fill = NA) +
   scale_color_viridis_c(option = "viridis", begin = 0, end = 1, direction = -1) +  # continuous color scale
   ggtitle("Troms") +
   theme_bw() +
@@ -224,7 +224,7 @@ intersect3_akershus <- intersect3 %>%
 # Plot with labels
 akershus_map <- ggplot() +
   geom_sf(data = shp2_akershus, color = "gray30", size = 0.2, fill = NA) +
-  geom_sf(data = intersect3_akershus, aes(color = occurrences), size = 1, fill = NA) +
+  geom_sf(data = intersect3_akershus, aes(color = occurrences), size = 1.5, fill = NA) +
   scale_color_viridis_c(option = "viridis", begin = 0, end = 1, direction = -1) +  # continuous color scale
   ggtitle("Akershus") +
   theme_bw() +
@@ -261,7 +261,7 @@ create_fishnet <- function(bbox, cell_size) {
 
 # Create a fishnet grid of 2km by 2km over the extent of shp2_akershus in UTM
 bbox_utm <- st_bbox(shp2_akershus_utm)
-cell_size <- 5000  # 2km in meters
+cell_size <- 2000  # 2km in meters
 
 fishnet_sf_utm <- create_fishnet(bbox_utm, cell_size)
 
@@ -296,7 +296,7 @@ intersect3_moere <- intersect3 %>%
 
 moere_map <- ggplot() +
   geom_sf(data = shp2_moere, color = "gray30", size = 0.2, fill = NA) +
-  geom_sf(data = intersect3_moere, aes(color = occurrences), size = 1, fill = NA) +
+  geom_sf(data = intersect3_moere, aes(color = occurrences), size = 1.5, fill = NA) +
   scale_color_viridis_c(option = "viridis", begin = 0, end = 1, direction = -1) +  # continuous color scale
   ggtitle("M\u00F8re og Romsdal") +
   theme_bw()+
@@ -368,7 +368,7 @@ intersect3_oestfold <- intersect3 %>%
 
 oestfold_map <- ggplot() +
   geom_sf(data = shp2_oestfold, color = "gray30", size = 0.2, fill = NA) +
-  geom_sf(data = intersect3_oestfold, aes(color = occurrences), size = 1, fill = NA) +
+  geom_sf(data = intersect3_oestfold, aes(color = occurrences), size = 1.5, fill = NA) +
   scale_color_viridis_c(option = "viridis", begin = 0, end = 1, direction = -1) +  # continuous color scale
   ggtitle("\u00D8stfold") +
   theme_bw() +
@@ -405,7 +405,7 @@ create_fishnet <- function(bbox, cell_size) {
 
 # Create a fishnet grid of 2km by 2km over the extent of shp2_oestfold in UTM
 bbox_utm <- st_bbox(shp2_oestfold_utm)
-cell_size <- 5000  # 2km in meters
+cell_size <- 2000  # 2km in meters
 
 fishnet_sf_utm <- create_fishnet(bbox_utm, cell_size)
 
@@ -441,7 +441,7 @@ intersect3_vestland <- intersect3 %>%
 # Plot with labels
 vestland_map <- ggplot() +
   geom_sf(data = shp2_vestland, color = "gray30", size = 0.2, fill = NA) +
-  geom_sf(data = intersect3_vestland, aes(color = occurrences), size = 0.8, fill = NA) +
+  geom_sf(data = intersect3_vestland, aes(color = occurrences), size = 1.5, fill = NA) +
   scale_color_viridis_c(option = "viridis", begin = 0, end = 1, direction = -1) +  # continuous color scale
   ggtitle("Vestland") +
   theme_bw() +
@@ -513,7 +513,7 @@ intersect3_nordland <- intersect3 %>% filter(FYLKESNAVN == "\"Nordland - Nordl\u
 # Plot with labels
 nordland_map <- ggplot() +
   geom_sf(data = shp2_nordland, color = "gray30", size = 0.2, fill = NA) +
-  geom_sf(data = intersect3_nordland, aes(color = occurrences), size = 1, fill = NA) +
+  geom_sf(data = intersect3_nordland, aes(color = occurrences), size = 1.5, fill = NA) +
   scale_color_viridis_c(option = "viridis", begin = 0, end = 1, direction = -1) +  # continuous color scale
   ggtitle("Nordland") +
   theme_bw() +
@@ -586,7 +586,7 @@ intersect3_rogaland <- intersect3 %>%
 # Plot with labels
 rogaland_map <- ggplot() +
   geom_sf(data = shp2_rogaland, color = "gray30", size = 0.2, fill = NA) +
-  geom_sf(data = intersect3_rogaland, aes(color = occurrences), size = 1, fill = NA) +
+  geom_sf(data = intersect3_rogaland, aes(color = occurrences), size = 1.5, fill = NA) +
   scale_color_viridis_c(option = "viridis", begin = 0, end = 1, direction = -1) +  # continuous color scale
   ggtitle("Rogaland") +
   theme_bw() +
@@ -672,6 +672,7 @@ print(troendelag_map)
 
 sum(intersect3_troendelag$occurrences)
 unique(intersect3_troendelag$originalScientificName)
+sum(intersect3_troendelag$occurrences)
 
 # CREATE GRID
 # Reproject shp2_troendelag to UTM zone 32N
@@ -732,7 +733,7 @@ intersect3_finnmark <- intersect3 %>%
 # Plot with labels
 finnmark_map <- ggplot() +
   geom_sf(data = shp2_finnmark, color = "gray30", size = 0.2, fill = NA) +
-  geom_sf(data = intersect3_finnmark, aes(color = occurrences), size = 1, fill = NA) +
+  geom_sf(data = intersect3_finnmark, aes(color = occurrences), size = 1.5, fill = NA) +
   scale_color_viridis_c(option = "viridis", begin = 0, end = 1, direction = -1) +  # continuous color scale
   ggtitle("Finnmark") +
   theme_bw() +
@@ -805,7 +806,7 @@ intersect3_agder <- intersect3 %>%
 # Plot with labels
 agder_map <- ggplot() +
   geom_sf(data = shp2_agder, color = "gray30", size = 0.2, fill = NA) +
-  geom_sf(data = intersect3_agder, aes(color = occurrences), size = 1, fill = NA) +
+  geom_sf(data = intersect3_agder, aes(color = occurrences), size = 1.5, fill = NA) +
   scale_color_viridis_c(option = "viridis", begin = 0, end = 1, direction = -1) +  # continuous color scale
   ggtitle("Agder") +
   theme_bw() +
@@ -878,7 +879,7 @@ intersect3_telemark <- intersect3 %>%
 # Plot with labels
 telemark_map <- ggplot() +
   geom_sf(data = shp2_telemark, color = "gray30", size = 0.2, fill = NA) +
-  geom_sf(data = intersect3_telemark, aes(color = occurrences), size = 1, fill = NA) +
+  geom_sf(data = intersect3_telemark, aes(color = occurrences), size = 1.5, fill = NA) +
   scale_color_viridis_c(option = "viridis", begin = 0, end = 1, direction = -1) +  # continuous color scale
   ggtitle("Telemark") +
   theme_bw() +
@@ -951,7 +952,7 @@ intersect3_vestfold <- intersect3 %>%
 # Plot with labels
 vestfold_map <- ggplot() +
   geom_sf(data = shp2_vestfold, color = "gray30", size = 0.2, fill = NA) +
-  geom_sf(data = intersect3_vestfold, aes(color = occurrences), size = 1, fill = NA) +
+  geom_sf(data = intersect3_vestfold, aes(color = occurrences), size = 1.5, fill = NA) +
   scale_color_viridis_c(option = "viridis", begin = 0, end = 1, direction = -1) +  # continuous color scale
   ggtitle("Vestfold") +
   theme_bw() +
@@ -1025,7 +1026,7 @@ intersect3_buskerud <- intersect3 %>%
 # Plot with labels
 buskerud_map <- ggplot() +
   geom_sf(data = shp2_buskerud, color = "gray30", size = 0.2, fill = NA) +
-  geom_sf(data = intersect3_buskerud, aes(color = occurrences), size = 1, fill = NA) +
+  geom_sf(data = intersect3_buskerud, aes(color = occurrences), size = 1.5, fill = NA) +
   scale_color_viridis_c(option = "viridis", begin = 0, end = 1, direction = -1) +  # continuous color scale
   ggtitle("Buskerud") +
   theme_bw() +
@@ -1184,31 +1185,37 @@ library(cowplot)  # Load the cowplot package for arranging plots
 
 # Set up the grid of plots for each region
 plot_grid(
-  finnmark_map, troms_map, nordland_map, 
+  finnmark_map, troms_map, 
   nrow = 1, byrow = TRUE,
   align = "h", axis = "l"
 ) 
 
 plot_grid(
-  troendelag_map, moere_map,
+  nordland_map, troendelag_map,
   nrow = 1, byrow = TRUE,
   align = "h", axis = "l"
 )
 
 plot_grid(
-  vestland_map,  rogaland_map, 
+moere_map,vestland_map,
+  nrow = 1, byrow = TRUE,
+  align = "h", axis = "l"
+)
+
+plot_grid(
+rogaland_map, agder_map,
   nrow = 1, byrow = TRUE,
   align = "h", axis = "l"
 )
   
 plot_grid(
-  agder_map, telemark_map,
+  telemark_map, buskerud_map, 
   nrow = 1, byrow = TRUE,
   align = "h", axis = "l"
 )
 
 plot_grid(
- buskerud_map, vestfold_map, oslo_map,
+vestfold_map, oslo_map,
   nrow =1 , byrow = TRUE,
   align = "h", axis = "l"
 )
