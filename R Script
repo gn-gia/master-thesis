@@ -478,7 +478,7 @@ create_fishnet <- function(bbox, cell_size) {
 
 # Create a fishnet grid of 2km by 2km over the extent of shp2_vestland in UTM
 bbox_utm <- st_bbox(shp2_vestland_utm)
-cell_size <- 5000  # 2km in meters
+cell_size <- 5000  # 5km in meters
 
 fishnet_sf_utm <- create_fishnet(bbox_utm, cell_size)
 
@@ -550,7 +550,7 @@ create_fishnet <- function(bbox, cell_size) {
 
 # Create a fishnet grid of 2km by 2km over the extent of shp2_nordland in UTM
 bbox_utm <- st_bbox(shp2_nordland_utm)
-cell_size <- 5000  # 2km in meters
+cell_size <- 5000  # 5km in meters
 
 fishnet_sf_utm <- create_fishnet(bbox_utm, cell_size)
 
@@ -623,7 +623,7 @@ create_fishnet <- function(bbox, cell_size) {
 
 # Create a fishnet grid of 2km by 2km over the extent of shp2_rogaland in UTM
 bbox_utm <- st_bbox(shp2_rogaland_utm)
-cell_size <- 5000  # 2km in meters
+cell_size <- 5000  # 5km in meters
 
 fishnet_sf_utm <- create_fishnet(bbox_utm, cell_size)
 
@@ -697,7 +697,7 @@ create_fishnet <- function(bbox, cell_size) {
 
 # Create a fishnet grid of 2km by 2km over the extent of shp2_troendelag in UTM
 bbox_utm <- st_bbox(shp2_troendelag_utm)
-cell_size <- 5000  # 2km in meters
+cell_size <- 5000  # 5km in meters
 
 fishnet_sf_utm <- create_fishnet(bbox_utm, cell_size)
 
@@ -770,7 +770,7 @@ create_fishnet <- function(bbox, cell_size) {
 
 # Create a fishnet grid of 2km by 2km over the extent of shp2_finnmark in UTM
 bbox_utm <- st_bbox(shp2_finnmark_utm)
-cell_size <- 5000  # 2km in meters
+cell_size <- 5000  # 5km in meters
 
 fishnet_sf_utm <- create_fishnet(bbox_utm, cell_size)
 
@@ -843,7 +843,7 @@ create_fishnet <- function(bbox, cell_size) {
 
 # Create a fishnet grid of 2km by 2km over the extent of shp2_agder in UTM
 bbox_utm <- st_bbox(shp2_agder_utm)
-cell_size <- 2000  # 2km in meters
+cell_size <- 5000  # 5km in meters
 
 fishnet_sf_utm <- create_fishnet(bbox_utm, cell_size)
 
@@ -989,7 +989,7 @@ create_fishnet <- function(bbox, cell_size) {
 
 # Create a fishnet grid of 2km by 2km over the extent of shp2_vestfold in UTM
 bbox_utm <- st_bbox(shp2_vestfold_utm)
-cell_size <- 2000  # 2km in meters
+cell_size <- 5000  # 5km in meters
 
 fishnet_sf_utm <- create_fishnet(bbox_utm, cell_size)
 
@@ -1230,7 +1230,7 @@ library(worrms) # (https://www.marinespecies.org/)
 
 #synonyms <- wm_synonyms_(id = c(aphiaIDs)) # Synonyms, do any overlap with the scientific name given with AphiaID
 #print(synonyms)'
-
+ 
 # Summarizing by classification
 aphiaIDs <- unique(intersect3$aphiaID)
 print(aphiaIDs)
@@ -1821,8 +1821,6 @@ View(map_occ_joined_clip3)
 intersect4 <- st_intersection(map_occ_joined_clip3, shp2)
 View(intersect4)
 
-boxplot(intersect4$depth)
-
 # Combine species and depth data into a single data frame
 combined_data <- data.frame(Phylum = intersect4$phylum, Depth = intersect4$depth)
 
@@ -1845,31 +1843,11 @@ if (nrow(combined_data) > 0) {
   print("No valid data to plot.")
 }
 
-# Create the plot
-depth <- ggplot() +
-  geom_sf(data = shp2) +
-  geom_sf(data = depth_data, aes(fill = depth, color = depth)) +
-  scale_fill_gradient(low = "red", high = "blue") +
-  scale_color_gradient(low = "red", high = "blue") +  # Adding color scale for points
-  theme_bw() +
-  theme(axis.title.x = element_blank(),  # Remove x-axis title
-        axis.title.y = element_blank(),  # Remove y-axis title
-        plot.title.position = "plot",  # Position the title centered above the plot
-        plot.title = element_text(hjust = 0.5))  # Center the title text
-
-print(depth)
-
-
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% YEAR
-
-
-library(ggplot2)
-library(dplyr)
 library(ggplot2)
 library(dplyr)
 
-# Create a data frame with the year and basis of record data
-year_bor_data <- data.frame(Basis_of_Record = intersect3$basisOfRecord, Year = intersect3$year)
+sum(is.na(intersect3$year))
 
 create_intervals <- function(year) {
   if (is.na(year)) {
@@ -1890,8 +1868,6 @@ create_intervals <- function(year) {
     return("Before 1970")
   }
 }
-# Remove rows with NA values
-year_bor_data <- na.omit(year_bor_data)
 
 # Apply the function to create a new column for intervals
 intersect3$Interval <- sapply(intersect3$year, create_intervals)
@@ -1904,11 +1880,12 @@ year_data <- intersect3 %>%
 
 # Check if there is any valid data to plot
 if (nrow(year_data) > 0) {
-  # Create the scatter plot
+  # Create the bar plot
   ggplot(data = year_data, aes(x = Interval, y = count)) +
-    geom_bar(stat = "identity", fill = "skyblue", color = "black") +
-    labs(title = "Species Occurrences by Interval",
-         x = "Interval",
+    geom_bar(stat = "identity", fill = "darkolivegreen4", color = "black") +
+    geom_text(aes(label = count), vjust = -0.5, color = "black") +  # Add counts on top of the bars
+    labs(title = "Species Occurrences by Time Interval",
+         x = "Time Interval",
          y = "Number of Occurrences") +
     theme_minimal() +
     theme(axis.text.x = element_text(angle = 90, hjust = 1)) +  # Rotate x-axis labels for better readability
@@ -1917,94 +1894,29 @@ if (nrow(year_data) > 0) {
   print("No valid data to plot.")
 }
 
+sum(year_data$count)
+
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Basis of observation
 
-# Create a data frame with the year and basis of record data
-year_bor_data <- data.frame(Basis_of_Record = intersect3$basisOfRecord, Year = intersect3$year)
+unique(intersect3$basisOfRecord)
 
-# Remove rows with NA values
-year_bor_data <- na.omit(year_bor_data)
+bor_d <- intersect3$basisOfRecord
 
-bor <- (year_bor_data$Basis_of_Record)
+sum_bor <- (sum(intersect3$basisOfRecord == "HumanObservation") + 
+    sum(intersect3$basisOfRecord == "PreservedSpecimen") +
+    sum(intersect3$basisOfRecord == "Occurrence") + 
+    sum(intersect3$basisOfRecord == "LivingSpecimen") +
+      sum(intersect3$basisOfRecord == "MaterialSample") +
+      sum(intersect3$basisOfRecord == "MachineObservation"))
 
-unique(year_bor_data$Basis_of_Record)
-sum(year_bor_data$Basis_of_Record == "HumanObservation")
-sum(year_bor_data$Basis_of_Record == "PreservedSpecimen")
-sum(year_bor_data$Basis_of_Record == "Occurrence")
-sum(year_bor_data$Basis_of_Record == "MaterialSample")
-
-
-bor_plot <- c(HumanObservation = 32174, PreservedSpecimen = 11413, Occurrence = 17813, MaterialSample = 1)
-
-print(bor_plot)
-pie(bor_plot)
-
-pie(bor_plot,
-    labels=as.character(bor_plot),
-    main="Basis of Records",
-    col=c("goldenrod1","firebrick2","midnightblue","forestgreen"),
-    border="black",
-    clockwise=TRUE
-)
-
-# Assuming 'year_bor_data' is already created and contains the 'Basis_of_Record' column
-# Remove rows with NA values
-year_bor_data <- na.omit(year_bor_data)
-
-# Count the occurrences of each Basis_of_Record
-bor_counts <- table(year_bor_data$Basis_of_Record)
-
-# Print the counts to verify
-print(bor_counts)
-
-# Create a named vector for the pie chart
-bor_plot <- c(
-  HumanObservation = sum(year_bor_data$Basis_of_Record == "HumanObservation"),
-  PreservedSpecimen = sum(year_bor_data$Basis_of_Record == "PreservedSpecimen"),
-  Occurrence = sum(year_bor_data$Basis_of_Record == "Occurrence"),
-  MaterialSample = sum(year_bor_data$Basis_of_Record == "MaterialSample")
-)
-# Define custom labels
-custom_labels <- c("Human Observation", "Preserved Specimen", "Occurrence", "Material Sample")
-
-bar_heights <- barplot(bor_plot,
-                       col = "goldenrod1",
-                       main = "Basis of Records",
-                       xlab = "Basis of Record",
-                       ylab = "Frequency",
-                       ylim = c(0, max(bor_plot) * 1.2),  # Adding some space on top for better readability
-                       names.arg = custom_labels)# Custom labels for the bars
-
-
-# Add the count numbers above each bar
-text(x = bar_heights, y = bor_plot, label = bor_plot, pos = 3, cex = 0.8, col = "black")
-
-
-
-# Set grbor_plot# Set graphical parameters to increase plot size
-par(mar = c(3, 3, 3, 3))  # Set margins
-par(cex = 1)  # Increase the size of text and symbols
-
-# Plot the pie chart
-pie(bor_plot,
-    labels = paste(names(bor_plot), "\n", bor_plot, sep = ""),
-    main = "Basis of Records",
-    col = c("goldenrod1", "firebrick2", "midnightblue", "forestgreen"),
-    border = "black",
-    clockwise = TRUE
-)
+(sum(intersect3$basisOfRecord == "HumanObservation")/ sum_bor) * 100
+(sum(intersect3$basisOfRecord == "PreservedSpecimen")/ sum_bor) * 100
+(sum(intersect3$basisOfRecord == "Occurrence")/ sum_bor) * 100
+(sum(intersect3$basisOfRecord == "LivingSpecimen")/ sum_bor) * 100
+(sum(intersect3$basisOfRecord == "MaterialSample")/ sum_bor) * 100
+(sum(intersect3$basisOfRecord == "MachineObservation")/ sum_bor) * 100
 
 ######################### Checks & Notes ##################################
-
-# Tasks for 23.05.2024:
-# Grid - change to 5 sq km or 2 sq km 
-# Year - run
-# Depth - run
-# basis of observation - run
-# enter all in results
-# put in redone maps 
-# begin on discussion
-
 
 #ADD HOW THE CORAL MPAS ARENT ALL GEOGRAPHICALLY DEFINE AS ACTUAL MPAS
 
