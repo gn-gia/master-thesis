@@ -38,6 +38,7 @@ filtered_data <- o %>%
   filter(kingdom %in% c("Animalia", "Plantae", "Chromista", NA))
 View(filtered_data)
 
+# Remove class Aves from dataset
 filtered_data1 <- filtered_data %>%
   filter(!(class == "Aves"))
 View(filtered_data1)
@@ -60,7 +61,6 @@ print(class(occ_sf))
 shp <- st_read("C:/Users/gngia/OneDrive/Documents/new obis/GIS/Kommuner_Fylker_Intersect.shp", stringsAsFactors=FALSE)
 shp <- st_transform(shp, crs = "EPSG:4326")
 print(shp1 <- st_crs(shp))
-View(shp)
 class(shp) # Shape_Area is in meters
 
 # Plot shapefile with occurrence data
@@ -76,22 +76,17 @@ shp2 <- st_transform(shp2, crs = "EPSG:4326")
 print(shp3 <- st_crs(shp2))
 class(shp2)
 
-print(shp2)
-
 # Plot shapefile2 with occurrence data
 ggplot() +
   geom_sf(data = shp2, fill = "black") +
   geom_sf(data = occ_sf, color = "pink", size = 1) +
   theme_bw()
 
-
 # Perform a spatial join
 map_occ_joined_clip1 <- st_join(occ_sf, shp2)
 class(map_occ_joined_clip1)
 View(map_occ_joined_clip1)
 
-is.na(occ_sf$bathymetry)
-is.na(occ_sf$depth)
 # Group by 'FYLKESNAVN' and count distinct 'originalScientificName'
 map_occ__with_clip1 <- map_occ_joined_clip1 %>%
   group_by(FYLKESNAVN) %>%
@@ -127,6 +122,7 @@ ggplot() +
   theme_bw()
 
 unique(intersect3$FYLKESNAVN)
+
 # Unicode <- https://symbl.cc/en/unicode-table/#latin-1-supplement
 #st_centroid returns the geometric center for a geometry
 
