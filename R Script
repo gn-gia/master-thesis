@@ -70,7 +70,7 @@ ggplot() +
   theme_bw()
 
 # Read the shapefile into an sf object and set crs (EPSG:4326, WGS84)
-# Shapefile clip with county, municipality, and is only territorial waters
+# Shapefile clip with county and is only territorial waters
 shp2 <- st_read("C:/Users/gngia/OneDrive/Documents/new obis/GIS/new_Fylker_Int_Terrw.shp", stringsAsFactors=FALSE)
 shp2 <- st_transform(shp2, crs = "EPSG:4326")
 print(shp3 <- st_crs(shp2))
