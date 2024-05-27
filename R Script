@@ -15,9 +15,10 @@ library(units)
 library(viridis)
 library(openxlsx)
 library(terra)
-#install.packages("remotes")
-#  remotes::install_github("IUCNN/IUCNN") # maybe not using this or rredlist
-#install.packages("rredlist")
+library(rredlist)
+install.packages("remotes")
+  remotes::install_github("IUCNN/IUCNN") # maybe not using this or rredlist
+install.packages("rredlist")
 
 
 # Occurrence Data: WKT string delimits polygon excluding Svalbard and Jan Mayen; Norway = 179 (Accessed 23.02.2024)
@@ -1268,8 +1269,6 @@ kable(percentage_occ_per_class, "latex", file = "Percentage_occ_per_class.tex")
 #WHAT I WANT TO DO IS RUN THE APHIAID FOR SPECIES NAMES AND THEN RUN THAT LIST USING THE IUCN PACAKGE AGAINST THE IUCN RED LIST DATA TO FIND ANY ENDANGERED SPECIES
 aphia_names <- wm_id2name_(aphiaIDs)
 print(aphia_names)
-library(rredlist) #I need to generate a token to use the IUCN API but the website is giving a 404 error, I emailed them about it 16.04.2024
-
 #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% FIND NA VALUES
 
 # Print NA/missing information of intersect3
@@ -1816,8 +1815,15 @@ habitat_types <- naturtyper %>%
 # View the result
 View(habitat_types)
 
-unique(habitat_types$FYLKESNAVN)
-unique(habitat_types$naturtype)
+# Read the shp made in ArcGIS Pro to an sf object - mareano habitat types
+mi_habitat <- st_read("C:/Users/gngia/OneDrive/Documents/new obis/GIS/merge_intersect_mareano.shp", stringsAsFactors=FALSE)
+mi_habitat <- st_transform(mi_habitat, crs = "EPSG:4326")
+print(mi_habitat1 <- st_crs(mi_habitat)) # area is in sq km
+
+View(mi_habitat)
+ggplot() +
+  geom_sf(data = mi_habitat, aes(color = FID_Marean), size = 1, fill = NA) +
+  theme_bw()
 
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% DEPTH
 
@@ -1924,16 +1930,7 @@ sum_bor <- (sum(intersect3$basisOfRecord == "HumanObservation") +
 
 ######################### Checks & Notes ##################################
 
-#ADD HOW THE CORAL MPAS ARENT ALL GEOGRAPHICALLY DEFINE AS ACTUAL MPAS
-
-# Notes from 30.04
+# ADD HOW THE CORAL MPAS ARENT ALL GEOGRAPHICALLY DEFINE AS ACTUAL MPAS
 # Continue writing (articles that I found to read are in Thesis)
-# Species that are indicative of a habitat type.
-# Grid the county water and then use red green to mark what is there
 # Take into account
 # -occurrences interesting taxa or taxa indicative of a habitat
-# -habitat data (Mareano)
-# What basis do we have to design an mpa network from scratch. How much data is there and how is is distributed spatially.
-# Another use metric:
-#  Amount of water is being used ? (Bottom trawling, etc)
-# Or use a coastline by drawing a linear line
