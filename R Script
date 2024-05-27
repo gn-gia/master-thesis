@@ -58,10 +58,10 @@ occ_sf$decimalLatitude <- filtered_data1$decimalLatitude
 print(class(occ_sf))
 
 # Read the shapefile into an sf object and set crs (EPSG:4326, WGS84)
-shp <- st_read("C:/Users/gngia/OneDrive/Documents/new obis/GIS/Kommuner_Fylker_Intersect.shp", stringsAsFactors=FALSE)
-shp <- st_transform(shp, crs = "EPSG:4326")
-print(shp1 <- st_crs(shp))
-class(shp) # Shape_Area is in meters
+#shp <- st_read("C:/Users/gngia/OneDrive/Documents/new obis/GIS/Kommuner_Fylker_Intersect.shp", stringsAsFactors=FALSE)
+#shp <- st_transform(shp, crs = "EPSG:4326")
+#print(shp1 <- st_crs(shp))
+#class(shp) # Shape_Area is in meters
 
 # Plot shapefile with occurrence data
 ggplot() +
@@ -72,7 +72,7 @@ ggplot() +
 # Read the shapefile into an sf object and set crs (EPSG:4326, WGS84)
 # Shapefile clip with county and is only territorial waters
 shp2 <- st_read("C:/Users/gngia/OneDrive/Documents/new obis/GIS/new_Fylker_Int_Terrw.shp", stringsAsFactors=FALSE)
-shp2 <- st_transform(shp2, crs = "EPSG:4326")
+shp2 <- st_transform(shp2, crs = "EPSG:4326") # km.sq.
 print(shp3 <- st_crs(shp2))
 class(shp2)
 
@@ -1787,6 +1787,37 @@ print(lob_con_ratios)
 lob_con_percent <- c(0.07721415,  3.08883530,  0.00864787, 28.67519468 , 0.49820126,  0.35300533, 1.37768073 , 0.07832196  ,2.22179824)
 lob_con_percent <- paste0(round(lob_con_percent, 2), "%")
 print(lob_con_percent)
+
+# Read the shp made in ArcGIS Pro to an sf object - habitat types (https://karteksport.miljodirektoratet.no/)
+naturtyper <- st_read("C:/Users/gngia/OneDrive/Documents/new obis/GIS/habitat_types.shp", stringsAsFactors=FALSE)
+naturtyper <- st_transform(naturtyper, crs = "EPSG:4326")
+print(naturtyper1 <- st_crs(naturtyper)) # area is in sq km
+
+# Rename columns with special characters correctly
+names(naturtyper)[names(naturtyper) == "n.U.00F8.yaktigh"] <- "nøyaktighetsklasse"
+
+#Check for invalid geometries
+invalid_geometries <- sum(!st_is_valid(naturtyper))
+print(paste("Number of invalid geometries:", invalid_geometries))
+
+# Fix invalid geometries
+naturtyper <- st_make_valid(naturtyper)
+
+# Re-check for invalid geometries
+invalid_geometries_after <- sum(!st_is_valid(naturtyper))
+print(paste("Number of invalid geometries after fix:", invalid_geometries_after))
+
+# Group by county and habitat type, then summarize the total area for each habitat type within each county
+habitat_types <- naturtyper %>%
+  group_by(FYLKESNAVN, naturtype) %>%
+  summarize(total_area = sum(area_natur, na.rm = TRUE), .groups = 'drop') %>%
+  arrange(FYLKESNAVN, naturtype)
+
+# View the result
+View(habitat_types)
+
+unique(habitat_types$FYLKESNAVN)
+unique(habitat_types$naturtype)
 
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% DEPTH
 
