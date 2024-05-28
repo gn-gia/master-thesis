@@ -1,10 +1,13 @@
 # setwd("C:/Users/gngia/OneDrive/Documents/new obis")
 
+# Unicode <- https://symbl.cc/en/unicode-table/#latin-1-supplement
+
 library(robis)
 library(dplyr)
 library(ggplot2)
 library(maps)
 library(sf)
+library(sp)
 library(robis)
 library(kableExtra)
 library(worrms)
@@ -15,13 +18,8 @@ library(units)
 library(viridis)
 library(openxlsx)
 library(terra)
-library(rredlist)
-install.packages("remotes")
-  remotes::install_github("IUCNN/IUCNN") # maybe not using this or rredlist
-install.packages("rredlist")
 
-
-# Occurrence Data: WKT string delimits polygon excluding Svalbard and Jan Mayen; Norway = 179 (Accessed 23.02.2024)
+# Occurrence Data: WKT string delimits polygon excluding Svalbard and Jan Mayen; Norway = 179
 library("dplyr")
 library("ggplot2")
 library("robis")
@@ -44,9 +42,6 @@ filtered_data1 <- filtered_data %>%
   filter(!(class == "Aves"))
 View(filtered_data1)
 
-# Plot filtered data
-map_ggplot(filtered_data1, color = "blue")
-
 # Transform to sf object and set crs (EPSG:4326, WGS84)
 occ_sf <- st_as_sf(filtered_data1, coords = c("decimalLongitude", "decimalLatitude"))
 occ_sf <- st_set_crs(occ_sf, "EPSG:4326")
@@ -55,7 +50,6 @@ print(st_crs(occ_sf))
 # Add the original coordinate columns back to the sf object
 occ_sf$decimalLongitude <- filtered_data1$decimalLongitude
 occ_sf$decimalLatitude <- filtered_data1$decimalLatitude
-
 print(class(occ_sf))
 
 # Read the shapefile into an sf object and set crs (EPSG:4326, WGS84)
@@ -124,9 +118,6 @@ ggplot() +
 
 unique(intersect3$FYLKESNAVN)
 
-# Unicode <- https://symbl.cc/en/unicode-table/#latin-1-supplement
-#st_centroid returns the geometric center for a geometry
-
 ####################### TROMS #######################################
 # Filter shp2 to include only the geometry for the county of interest
 shp2_troms <- shp2[shp2$FYLKESNAVN == "\"Troms - Romsa - Tromssa\"", ]
@@ -173,7 +164,7 @@ create_fishnet <- function(bbox, cell_size) {
 
 # Create a fishnet grid of 2km by 2km over the extent of shp2_troms in UTM
 bbox_utm <- st_bbox(shp2_troms_utm)
-cell_size <- 5000  # 2km in meters
+cell_size <- 5000  # 2km
 
 fishnet_sf_utm <- create_fishnet(bbox_utm, cell_size)
 
@@ -246,7 +237,7 @@ create_fishnet <- function(bbox, cell_size) {
 
 # Create a fishnet grid of 2km by 2km over the extent of shp2_akershus in UTM
 bbox_utm <- st_bbox(shp2_akershus_utm)
-cell_size <- 2000  # 2km in meters
+cell_size <- 2000  # 2km
 
 fishnet_sf_utm <- create_fishnet(bbox_utm, cell_size)
 
@@ -316,9 +307,9 @@ create_fishnet <- function(bbox, cell_size) {
   return(fishnet_sf)
 }
 
-# Create a fishnet grid of 2km by 2km over the extent of shp2_moere in UTM
+# Create a fishnet grid of 5km over the extent of shp2_moere in UTM
 bbox_utm <- st_bbox(shp2_moere_utm)
-cell_size <- 5000  # 2km in meters
+cell_size <- 5000  # 5km
 
 fishnet_sf_utm <- create_fishnet(bbox_utm, cell_size)
 
@@ -388,9 +379,9 @@ create_fishnet <- function(bbox, cell_size) {
   return(fishnet_sf)
 }
 
-# Create a fishnet grid of 2km by 2km over the extent of shp2_oestfold in UTM
+# Create a fishnet grid of 2km over the extent of shp2_oestfold in UTM
 bbox_utm <- st_bbox(shp2_oestfold_utm)
-cell_size <- 2000  # 2km in meters
+cell_size <- 2000  # 2km
 
 fishnet_sf_utm <- create_fishnet(bbox_utm, cell_size)
 
@@ -461,9 +452,9 @@ create_fishnet <- function(bbox, cell_size) {
   return(fishnet_sf)
 }
 
-# Create a fishnet grid of 2km by 2km over the extent of shp2_vestland in UTM
+# Create a fishnet grid of shp2_vestland in UTM
 bbox_utm <- st_bbox(shp2_vestland_utm)
-cell_size <- 5000  # 5km in meters
+cell_size <- 5000  # 5km
 
 fishnet_sf_utm <- create_fishnet(bbox_utm, cell_size)
 
@@ -533,9 +524,9 @@ create_fishnet <- function(bbox, cell_size) {
   return(fishnet_sf)
 }
 
-# Create a fishnet grid of 2km by 2km over the extent of shp2_nordland in UTM
+# Create a fishnet grid of 5km of shp2_nordland in UTM
 bbox_utm <- st_bbox(shp2_nordland_utm)
-cell_size <- 5000  # 5km in meters
+cell_size <- 5000  # 5km 
 
 fishnet_sf_utm <- create_fishnet(bbox_utm, cell_size)
 
@@ -606,9 +597,9 @@ create_fishnet <- function(bbox, cell_size) {
   return(fishnet_sf)
 }
 
-# Create a fishnet grid of 2km by 2km over the extent of shp2_rogaland in UTM
+# Create a fishnet grid of 5km of shp2_rogaland in UTM
 bbox_utm <- st_bbox(shp2_rogaland_utm)
-cell_size <- 5000  # 5km in meters
+cell_size <- 5000  # 5km
 
 fishnet_sf_utm <- create_fishnet(bbox_utm, cell_size)
 
@@ -680,9 +671,9 @@ create_fishnet <- function(bbox, cell_size) {
   return(fishnet_sf)
 }
 
-# Create a fishnet grid of 2km by 2km over the extent of shp2_troendelag in UTM
+# Create a fishnet grid of 5km of shp2_troendelag in UTM
 bbox_utm <- st_bbox(shp2_troendelag_utm)
-cell_size <- 5000  # 5km in meters
+cell_size <- 5000  # 5km
 
 fishnet_sf_utm <- create_fishnet(bbox_utm, cell_size)
 
@@ -753,9 +744,9 @@ create_fishnet <- function(bbox, cell_size) {
   return(fishnet_sf)
 }
 
-# Create a fishnet grid of 2km by 2km over the extent of shp2_finnmark in UTM
+# Create a fishnet grid of 5km of shp2_finnmark in UTM
 bbox_utm <- st_bbox(shp2_finnmark_utm)
-cell_size <- 5000  # 5km in meters
+cell_size <- 5000  # 5km
 
 fishnet_sf_utm <- create_fishnet(bbox_utm, cell_size)
 
@@ -826,9 +817,9 @@ create_fishnet <- function(bbox, cell_size) {
   return(fishnet_sf)
 }
 
-# Create a fishnet grid of 2km by 2km over the extent of shp2_agder in UTM
+# Create a fishnet grid of 5km of shp2_agder in UTM
 bbox_utm <- st_bbox(shp2_agder_utm)
-cell_size <- 5000  # 5km in meters
+cell_size <- 5000  # 5km 
 
 fishnet_sf_utm <- create_fishnet(bbox_utm, cell_size)
 
@@ -899,9 +890,9 @@ create_fishnet <- function(bbox, cell_size) {
   return(fishnet_sf)
 }
 
-# Create a fishnet grid of 2km by 2km over the extent of shp2_telemark in UTM
+# Create a fishnet grid of 2km of shp2_telemark in UTM
 bbox_utm <- st_bbox(shp2_telemark_utm)
-cell_size <- 2000  # 2km in meters
+cell_size <- 2000  # 2km 
 
 fishnet_sf_utm <- create_fishnet(bbox_utm, cell_size)
 
@@ -972,9 +963,9 @@ create_fishnet <- function(bbox, cell_size) {
   return(fishnet_sf)
 }
 
-# Create a fishnet grid of 2km by 2km over the extent of shp2_vestfold in UTM
+# Create a fishnet grid of 5km of shp2_vestfold in UTM
 bbox_utm <- st_bbox(shp2_vestfold_utm)
-cell_size <- 5000  # 5km in meters
+cell_size <- 5000  # 5km
 
 fishnet_sf_utm <- create_fishnet(bbox_utm, cell_size)
 
@@ -1046,9 +1037,9 @@ create_fishnet <- function(bbox, cell_size) {
   return(fishnet_sf)
 }
 
-# Create a fishnet grid of 2km by 2km over the extent of shp2_buskerud in UTM
+# Create a fishnet grid of 2km of shp2_buskerud in UTM
 bbox_utm <- st_bbox(shp2_buskerud_utm)
-cell_size <- 2000  # 2km in meters
+cell_size <- 2000  # 2km
 
 fishnet_sf_utm <- create_fishnet(bbox_utm, cell_size)
 
@@ -1135,9 +1126,9 @@ create_fishnet <- function(bbox, cell_size) {
   return(fishnet_sf)
 }
 
-# Create a fishnet grid of 2km by 2km over the extent of shp2_oslo in UTM
+# Create a fishnet grid of 2km of shp2_oslo in UTM
 bbox_utm <- st_bbox(shp2_oslo_utm)
-cell_size <- 2000  # 2km in meters
+cell_size <- 2000  # 2km
 
 fishnet_sf_utm <- create_fishnet(bbox_utm, cell_size)
 
@@ -1266,9 +1257,6 @@ sum(percentage_occ_per_class$total_occurrences) # 136,945
 # Returns the data into a format for latex, using kableExtra
 kable(percentage_occ_per_class, "latex", file = "Percentage_occ_per_class.tex")
 
-#WHAT I WANT TO DO IS RUN THE APHIAID FOR SPECIES NAMES AND THEN RUN THAT LIST USING THE IUCN PACAKGE AGAINST THE IUCN RED LIST DATA TO FIND ANY ENDANGERED SPECIES
-aphia_names <- wm_id2name_(aphiaIDs)
-print(aphia_names)
 #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% FIND NA VALUES
 
 # Print NA/missing information of intersect3
@@ -1280,16 +1268,13 @@ for (i in indices_with_na) {
   cat("Column", i, "has", sum(is.na(intersect3[, i])), "NA values.\n")
 }
 
-# Column 5 has 1546 NA values. - Family
-# Column 22 has 13799 NA values. - REF
-
 # Print NA/missing information of intersect3
 indices_with_na <- which(rowSums(is.na(intersect3)) > 0)
 print(indices_with_na)
 
 # Print the number of NA values in each row
 for (i in indices_with_na) {
-  cat("Row", i, "has", sum(is.na(intersect3[i, ])), "NA values.\n") # Lists every row with an NA value (18,397 rows)
+  cat("Row", i, "has", sum(is.na(intersect3[i, ])), "NA values.\n") # Lists every row with an NA value
 }
 
 any(is.na(intersect3$originalScientificName)) # FALSE
@@ -1439,9 +1424,6 @@ print(tare_ratios)
 tare_hostfelt_percent <- c(2.939564e+01, 4.287311e-06, 4.634014e+01, 1.929668e+01, 2.927445e+01, 1.441436e+00)
 tare_hostfelt_percent <- paste0(round(tare_hostfelt_percent, 2), "%")
 print(tare_hostfelt_percent)
-
-
-# SHOULD I ADD TARE HOESTFORBUD REVTANGEN TOO? I THINK IT IS ONLY 1 PLACE IN ROGALAND?
 
 # Read the shp made in ArcGIS Pro to an sf object - coral reef  (https://open-data-fiskeridirektoratet-fiskeridir.hub.arcgis.com/datasets/6466197faeb9430c9665d24a05ae3372_11/explore?location=65.127684%2C15.822468%2C5.01)
 #"Prohibition on the use of tools that are towed while fishing, as well as nets, lines and fishing lines"
@@ -1815,16 +1797,6 @@ habitat_types <- naturtyper %>%
 # View the result
 View(habitat_types)
 
-# Read the shp made in ArcGIS Pro to an sf object - mareano habitat types
-mi_habitat <- st_read("C:/Users/gngia/OneDrive/Documents/new obis/GIS/merge_intersect_mareano.shp", stringsAsFactors=FALSE)
-mi_habitat <- st_transform(mi_habitat, crs = "EPSG:4326")
-print(mi_habitat1 <- st_crs(mi_habitat)) # area is in sq km
-
-View(mi_habitat)
-ggplot() +
-  geom_sf(data = mi_habitat, aes(color = FID_Marean), size = 1, fill = NA) +
-  theme_bw()
-
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% DEPTH
 
 map_occ_joined_clip3 <- map_occ_joined_clip1 %>%
@@ -1927,10 +1899,3 @@ sum_bor <- (sum(intersect3$basisOfRecord == "HumanObservation") +
 (sum(intersect3$basisOfRecord == "LivingSpecimen")/ sum_bor) * 100
 (sum(intersect3$basisOfRecord == "MaterialSample")/ sum_bor) * 100
 (sum(intersect3$basisOfRecord == "MachineObservation")/ sum_bor) * 100
-
-######################### Checks & Notes ##################################
-
-# ADD HOW THE CORAL MPAS ARENT ALL GEOGRAPHICALLY DEFINE AS ACTUAL MPAS
-# Continue writing (articles that I found to read are in Thesis)
-# Take into account
-# -occurrences interesting taxa or taxa indicative of a habitat
