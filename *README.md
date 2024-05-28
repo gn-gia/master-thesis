@@ -1,5 +1,5 @@
 # Gap analysis in the effectiveness of the current Marine Protected Area network design framework with respect to biodiversity conservation in coastal Norway
-This repository is used for my master's thesis (May 2024).
+This repository is used for my master's thesis (June 2024).
 
 The purpose of this repo is to record the R script used to analyse species occurrence data with regards to coastal Norway and administrative borders. It was used in a broader way to inform on MPA network design and MPA criteria.
 
