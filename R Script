@@ -1556,7 +1556,6 @@ carto_percent <- c(0.3720752 ,35.9828636, 2.5794776 , 0.6461315, 4.9742430 , 1.8
 carto_percent <- paste0(round(carto_percent, 2), "%")
 print(carto_percent)
 
-
 # Read the shp made in ArcGIS Pro to an sf object - ODIMS 2021 data (https://odims.ospar.org/en/submissions/ospar_mpa_2021_07/)
 ospar_mpa <- st_read("C:/Users/gngia/OneDrive/Documents/new obis/ospar_mpa_new.shp", stringsAsFactors=FALSE)
 ospar_mpa <- st_transform(ospar_mpa, crs = "EPSG:4326")
@@ -1780,3 +1779,32 @@ sum_bor <- (sum(intersect3$basisOfRecord == "HumanObservation") +
 (sum(intersect3$basisOfRecord == "LivingSpecimen")/ sum_bor) * 100
 (sum(intersect3$basisOfRecord == "MaterialSample")/ sum_bor) * 100
 (sum(intersect3$basisOfRecord == "MachineObservation")/ sum_bor) * 100
+
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Whale migratory pattern
+
+# Filter for multiple species and combine
+intersect3_filtered <- intersect3 %>%
+  filter(originalScientificName %in% c("Physeter macrocephalus", 
+                                       "Balaenoptera acutorostrata",
+                                       "Balaena mysticetus",
+                                       "Balaenoptera borealis",
+                                       "Balaenoptera musculus",
+                                       "Balaenoptera physalus",
+                                       "Physeter catodon",
+                                       "Orcinus orca",
+                                       "Megaptera novaeangliae"))
+
+
+
+# Plot with ggplot2
+ceta <- ggplot() +
+  geom_sf(data = shp2, fill = NA, color = "black") +
+  geom_sf(data = intersect3_filtered, aes(color = originalScientificName), size = 1.5) +
+  theme_bw() +
+  labs(color = "Occurrences") + 
+  ggtitle("Occurrences of Cetaceans")+
+  theme(
+  plot.title.position = "panel",  # Position the title centered above the plot
+  plot.title = element_text(hjust = 0.5)  # Center the title text
+)
+print(ceta)
