@@ -1366,6 +1366,11 @@ tare_ref_percent <- c(0.1713162, 0.7447074, 0.7913688, 0.3765071)
 tare_ref_percent <- paste0(round(tare_ref_percent, 2), "%")
 print(tare_ref_percent)
 
+sum(tare_shp$area[tare_shp$fylke == "M\u00F8re og Romsdal"])
+sum(tare_shp$area[tare_shp$fylke == "Tr\u00F8ndelag"])
+sum(tare_shp$area[tare_shp$fylke == "Vestland"])
+sum(tare_shp$area[tare_shp$fylke == "Nordland"])
+
 # Read the shp made in ArcGIS Pro to an sf object - coral reef  (https://open-data-fiskeridirektoratet-fiskeridir.hub.arcgis.com/datasets/6466197faeb9430c9665d24a05ae3372_11/explore?location=65.127684%2C15.822468%2C5.01)
 #"Prohibition on the use of tools that are towed while fishing, as well as nets, lines and fishing lines"
 korall_forbudsomr_shp <- st_read("C:/Users/gngia/OneDrive/Documents/new obis/Korall_rev_forbudsomr_new.shp", stringsAsFactors=FALSE)
